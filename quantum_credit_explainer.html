@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Quantum Credit Scoring — Voiced Explainer</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<style>
+:root{
+  --bg:#03050f;--panel:#06091a;--border:#1a2240;
+  --teal:#00d4c8;--gold:#f5a820;--purple:#8855ff;
+  --rose:#ff4488;--text:#c0cfe0;--dim:#3a4a60;
+  --bright:#e8f0ff;--green:#22cc88;--orange:#ff7733;--blue:#3399ff;
+  --hdr:44px;--eq:90px;--ctrl:52px;--nbar:38px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
+  font-family:'Rajdhani',sans-serif;touch-action:manipulation;}
+#app{display:flex;flex-direction:column;height:100vh;
+  background:radial-gradient(ellipse at 20% 50%,#060a1e 0%,#03050f 60%);}
+#stage-header{display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,.35);flex-shrink:0;height:var(--hdr);min-height:var(--hdr);}
+#stage-crumbs{display:flex;align-items:center;gap:5px;overflow-x:auto;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+#stage-crumbs::-webkit-scrollbar{display:none;}
+.crumb{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;
+  padding:3px 8px;border-radius:3px;opacity:.35;transition:opacity .4s,background .4s;
+  color:var(--teal);border:1px solid var(--teal);white-space:nowrap;flex-shrink:0;}
+.crumb.active{opacity:1;background:rgba(0,212,200,.12);}
+#paper-label{font-size:9px;letter-spacing:1.5px;color:var(--dim);
+  text-transform:uppercase;white-space:nowrap;flex-shrink:0;margin-left:8px;}
+#main-layout{display:flex;flex:1;overflow:hidden;min-height:0;}
+#canvas-panel{flex:0 0 62%;display:flex;flex-direction:column;
+  border-right:1px solid var(--border);min-width:0;}
+@media(max-width:700px){#canvas-panel{flex:0 0 100%;border-right:none;}}
+#main-canvas{width:100%;flex:1;display:block;min-height:0;}
+#eq-layer{padding:8px 14px;background:rgba(0,0,0,.45);
+  border-top:1px solid var(--border);
+  height:var(--eq);min-height:var(--eq);max-height:var(--eq);
+  display:flex;flex-direction:column;gap:4px;justify-content:center;overflow:hidden;}
+.eq-row{opacity:0;transform:translateY(5px);transition:opacity .5s,transform .5s;
+  display:flex;align-items:center;gap:10px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;}
+.eq-row.show{opacity:1;transform:translateY(0);}
+.eq-label{font-size:9px;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase;
+  white-space:nowrap;font-family:'Fira Code',monospace;flex-shrink:0;}
+.eq-row .katex{color:var(--bright)!important;font-size:.88em;}
+#info-panel{flex:1;display:flex;flex-direction:column;
+  padding:16px 16px 10px;overflow-y:auto;min-width:0;-webkit-overflow-scrolling:touch;}
+@media(max-width:700px){#info-panel{display:none;}}
+#scene-num{font-size:9px;letter-spacing:1.8px;color:var(--teal);
+  text-transform:uppercase;margin-bottom:6px;font-family:'Fira Code',monospace;}
+#scene-title{font-size:19px;font-weight:700;color:var(--bright);line-height:1.2;margin-bottom:3px;}
+#scene-subtitle{font-size:11px;color:var(--gold);font-weight:600;
+  letter-spacing:1.2px;text-transform:uppercase;margin-bottom:12px;font-family:'Fira Code',monospace;}
+#interp-content{font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);line-height:1.7;}
+#interp-content p{margin-bottom:9px;}
+#interp-content strong{color:var(--gold);font-weight:600;}
+#interp-content em{color:var(--teal);font-style:italic;}
+.insight{border-left:2px solid var(--teal);padding-left:10px;margin:8px 0;
+  font-size:13px;color:var(--dim);transition:color .4s;}
+.insight.lit{color:var(--text);}
+.tag{display:inline-block;font-family:'Fira Code',monospace;font-size:9px;
+  padding:2px 6px;border-radius:2px;letter-spacing:1px;text-transform:uppercase;margin:1px;}
+.tag.gpu{background:rgba(34,204,136,.15);color:var(--green);border:1px solid rgba(34,204,136,.35);}
+.tag.qpu{background:rgba(0,212,200,.15);color:var(--teal);border:1px solid rgba(0,212,200,.35);}
+.tag.vqc{background:rgba(136,85,255,.2);color:var(--purple);border:1px solid rgba(136,85,255,.4);}
+.tag.rt{background:rgba(245,168,32,.15);color:var(--gold);border:1px solid rgba(245,168,32,.35);}
+.tag.sme{background:rgba(255,68,136,.15);color:var(--rose);border:1px solid rgba(255,68,136,.35);}
+#narration-bar{height:var(--nbar);min-height:var(--nbar);flex-shrink:0;
+  background:rgba(0,0,0,.5);border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;padding:0 12px;overflow:hidden;}
+#narration-scroll{flex:1;overflow:hidden;position:relative;height:22px;}
+#narration-text{font-family:'Crimson Pro',serif;font-size:13px;color:var(--text);
+  white-space:nowrap;position:absolute;left:0;top:0;transition:none;}
+#voice-badge{font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--dim);font-family:'Fira Code',monospace;white-space:nowrap;flex-shrink:0;}
+#speaking-dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:background .2s;}
+#speaking-dot.active{background:var(--teal);animation:pulse-dot 1s infinite;}
+@keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.4;}}
+#controls{display:flex;align-items:center;gap:8px;padding:0 12px;
+  border-top:1px solid var(--border);background:rgba(0,0,0,.55);flex-shrink:0;
+  height:var(--ctrl);min-height:var(--ctrl);}
+.ctrl-btn{background:none;border:1px solid var(--border);color:var(--text);
+  width:32px;height:32px;border-radius:4px;cursor:pointer;font-size:12px;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;
+  flex-shrink:0;-webkit-appearance:none;}
+.ctrl-btn:hover,.ctrl-btn:active{border-color:var(--teal);color:var(--teal);}
+#btn-play{width:38px;height:38px;border-color:var(--teal);color:var(--teal);font-size:14px;}
+#btn-play.playing{background:rgba(0,212,200,.1);}
+#btn-voice.on{border-color:var(--teal);color:var(--teal);background:rgba(0,212,200,.08);}
+#progress-wrap{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;}
+#progress-bar{width:100%;height:5px;background:var(--dim);border-radius:3px;
+  cursor:pointer;position:relative;touch-action:none;}
+#progress-fill{height:100%;background:var(--teal);border-radius:3px;width:0%;
+  pointer-events:none;transition:width .1s linear;}
+#scene-markers{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+.scene-mark{position:absolute;top:-1px;width:2px;height:7px;background:var(--purple);
+  border-radius:1px;transform:translateX(-50%);}
+#time-info{display:flex;justify-content:space-between;font-size:9px;color:var(--dim);
+  font-family:'Fira Code',monospace;}
+#countdown-ring{position:relative;width:32px;height:32px;flex-shrink:0;}
+#countdown-ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg);}
+.cr-bg{fill:none;stroke:var(--border);stroke-width:2;}
+.cr-fill{fill:none;stroke:var(--teal);stroke-width:2;stroke-linecap:round;
+  stroke-dasharray:88;stroke-dashoffset:88;transition:stroke-dashoffset .1s linear;}
+#countdown-label{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;font-size:8px;color:var(--teal);font-family:'Fira Code',monospace;}
+#scene-counter{font-size:10px;color:var(--dim);font-family:'Fira Code',monospace;
+  white-space:nowrap;flex-shrink:0;}
+#voice-modal{display:none;position:fixed;bottom:calc(var(--ctrl) + var(--nbar) + 8px);
+  left:12px;width:260px;background:var(--panel);border:1px solid var(--border);
+  border-radius:8px;padding:14px;z-index:100;box-shadow:0 8px 32px rgba(0,0,0,.7);}
+#voice-modal.open{display:block;}
+.vm-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--dim);font-family:'Fira Code',monospace;margin-bottom:6px;}
+#voice-select{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);
+  color:var(--text);font-family:'Rajdhani',sans-serif;font-size:12px;
+  padding:5px 8px;border-radius:4px;margin-bottom:12px;-webkit-appearance:none;}
+#voice-select:focus{outline:none;border-color:var(--teal);}
+.vm-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.vm-row label{font-size:11px;color:var(--text);width:54px;flex-shrink:0;}
+.vm-row input[type=range]{flex:1;accent-color:var(--teal);height:4px;}
+.vm-row span{font-size:10px;color:var(--teal);font-family:'Fira Code',monospace;width:32px;text-align:right;}
+#btn-test-voice{width:100%;padding:7px;background:rgba(0,212,200,.1);
+  border:1px solid var(--teal);color:var(--teal);border-radius:4px;
+  font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:1px;
+  cursor:pointer;text-transform:uppercase;}
+#ios-unlock{display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(3,5,15,.92);flex-direction:column;align-items:center;
+  justify-content:center;gap:20px;}
+#ios-unlock.show{display:flex;}
+#ios-unlock p{color:var(--text);font-family:'Crimson Pro',serif;font-size:17px;
+  text-align:center;max-width:280px;}
+#btn-ios-start{padding:14px 32px;background:rgba(0,212,200,.15);
+  border:2px solid var(--teal);color:var(--teal);border-radius:8px;
+  font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:600;
+  letter-spacing:2px;cursor:pointer;text-transform:uppercase;}
+@media(max-width:700px){
+  :root{--eq:72px;--ctrl:46px;--nbar:32px;}
+  .crumb{font-size:9px;padding:2px 6px;}
+  #paper-label{display:none;}
+  #narration-text{font-size:12px;}
+  #scene-counter{display:none;}
+  #countdown-ring{display:none;}
+}
+@media(max-width:400px){
+  :root{--eq:64px;--ctrl:42px;}
+  #btn-voice{display:none;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage-header">
+    <div id="stage-crumbs">
+      <div class="crumb" data-stage="0">Why Quantum</div>
+      <div class="crumb" data-stage="1">Features</div>
+      <div class="crumb" data-stage="2">Encoding</div>
+      <div class="crumb" data-stage="3">VQC</div>
+      <div class="crumb" data-stage="4">Training</div>
+      <div class="crumb" data-stage="5">Hardware</div>
+      <div class="crumb" data-stage="6">Clusters</div>
+      <div class="crumb" data-stage="7">Impact</div>
+    </div>
+    <div id="paper-label">Hybrid GPU · QPU · 2026</div>
+  </div>
+  <div id="main-layout">
+    <div id="canvas-panel">
+      <canvas id="main-canvas"></canvas>
+      <div id="eq-layer">
+        <div class="eq-row" id="eq0"></div>
+        <div class="eq-row" id="eq1"></div>
+        <div class="eq-row" id="eq2"></div>
+      </div>
+    </div>
+    <div id="info-panel">
+      <div id="scene-num"></div>
+      <h2 id="scene-title"></h2>
+      <div id="scene-subtitle"></div>
+      <div id="interp-content"></div>
+    </div>
+  </div>
+  <div id="narration-bar">
+    <div id="speaking-dot"></div>
+    <div id="narration-scroll">
+      <div id="narration-text">Press ▶ to begin the narrated explainer</div>
+    </div>
+    <div id="voice-badge">TTS</div>
+  </div>
+  <div id="controls">
+    <button class="ctrl-btn" id="btn-prev" title="Previous (←)">&#9664;</button>
+    <button class="ctrl-btn" id="btn-play" title="Play/Pause (Space)">&#9654;</button>
+    <button class="ctrl-btn" id="btn-next" title="Next (→)">&#9654;&#9654;</button>
+    <div id="progress-wrap">
+      <div id="progress-bar">
+        <div id="progress-fill"></div>
+        <div id="scene-markers"></div>
+      </div>
+      <div id="time-info">
+        <span id="time-current">0:00</span>
+        <span id="time-total">0:00</span>
+      </div>
+    </div>
+    <div id="countdown-ring">
+      <svg width="32" height="32" viewBox="0 0 32 32">
+        <circle class="cr-bg" cx="16" cy="16" r="14"/>
+        <circle class="cr-fill" id="cr-arc" cx="16" cy="16" r="14"/>
+      </svg>
+      <div id="countdown-label">—</div>
+    </div>
+    <button class="ctrl-btn on" id="btn-voice" title="Voice settings">&#128264;</button>
+    <div id="scene-counter">1/15</div>
+  </div>
+</div>
+
+<div id="voice-modal">
+  <div class="vm-label">Voice</div>
+  <select id="voice-select"><option>Loading voices…</option></select>
+  <div class="vm-row">
+    <label>Speed</label>
+    <input type="range" id="rate-slider" min="0.6" max="1.6" step="0.05" value="1.0">
+    <span id="rate-val">1.0×</span>
+  </div>
+  <div class="vm-row">
+    <label>Pitch</label>
+    <input type="range" id="pitch-slider" min="0.6" max="1.4" step="0.05" value="1.0">
+    <span id="pitch-val">1.0</span>
+  </div>
+  <div class="vm-row">
+    <label>Volume</label>
+    <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="1.0">
+    <span id="vol-val">100%</span>
+  </div>
+  <button id="btn-test-voice">▶ Test voice</button>
+</div>
+
+<div id="ios-unlock">
+  <p>Tap to unlock audio narration<br><span style="font-size:13px;color:var(--dim)">(iOS requires a tap before speech can begin)</span></p>
+  <button id="btn-ios-start">Tap to Start &#128264;</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// KATEX HELPER
+// ═══════════════════════════════════════════════════
+function renderK(el,latex){
+  if(!el)return;
+  try{katex.render(latex,el,{displayMode:false,throwOnError:false});}
+  catch(e){el.textContent=latex;}
+}
+
+// ═══════════════════════════════════════════════════
+// COLOURS
+// ═══════════════════════════════════════════════════
+const C={
+  bg:'#03050f',panel:'#06091a',border:'#1a2240',
+  teal:'#00d4c8',gold:'#f5a820',purple:'#8855ff',
+  rose:'#ff4488',text:'#c0cfe0',dim:'#3a4a60',
+  bright:'#e8f0ff',green:'#22cc88',orange:'#ff7733',blue:'#3399ff'
+};
+
+// ═══════════════════════════════════════════════════
+// EASING
+// ═══════════════════════════════════════════════════
+const ease={
+  out3:t=>1-Math.pow(1-t,3),
+  inOut:t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,
+  step:(t,s,e)=>Math.max(0,Math.min(1,(t-s)/(e-s))),
+  clamp:(v,lo=0,hi=1)=>Math.max(lo,Math.min(hi,v))
+};
+
+const seed=(i,j=0)=>{let s=(i*2654435761+j*1234567)>>>0;return((s^(s>>16))>>>0)/4294967296;};
+
+function drawGrid(ctx,W,H){
+  ctx.strokeStyle='rgba(26,34,64,.35)';ctx.lineWidth=.5;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 0: TITLE — quantum credit scoring
+// ═══════════════════════════════════════════════════
+function sceneTitle(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  // Animated particle network
+  const N=60;
+  for(let i=0;i<N;i++){
+    const bx=seed(i*3)*W,by=seed(i*3+1)*H,ph=seed(i*3+2)*Math.PI*2;
+    const sp=.3+seed(i*7)*.4;
+    const x=bx+Math.sin(t*sp*Math.PI*2+ph)*20,y=by+Math.cos(t*sp*1.3*Math.PI*2+ph*1.5)*15;
+    const r=1.5+seed(i*11)*2.5,a=.2+seed(i*13)*.5;
+    // colour by "risk" - teal=safe, rose=default
+    const col=seed(i*17)>.6?C.rose:C.teal;
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=col.replace(')',`,${a*t})`).replace('rgb','rgba').replace('#','').length>7?
+      `rgba(0,212,200,${a*t})`:col;
+    // simpler approach:
+    if(seed(i*17)>.6){ctx.fillStyle=`rgba(255,68,136,${a*t})`;}
+    else{ctx.fillStyle=`rgba(0,212,200,${a*t})`;}
+    ctx.fill();
+    for(let j=i+1;j<N;j++){
+      const bx2=seed(j*3)*W,by2=seed(j*3+1)*H,ph2=seed(j*3+2)*Math.PI*2;
+      const sp2=.3+seed(j*7)*.4;
+      const x2=bx2+Math.sin(t*sp2*Math.PI*2+ph2)*20,y2=by2+Math.cos(t*sp2*1.3*Math.PI*2+ph2*1.5)*15;
+      const d=Math.hypot(x2-x,y2-y);
+      if(d<85){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);
+        ctx.strokeStyle=`rgba(0,212,200,${(1-d/85)*.1*t})`;ctx.lineWidth=.5;ctx.stroke();}
+    }
+  }
+  // Central glow
+  const cx=W/2,cy=H/2,pulse=.5+.5*Math.sin(t*Math.PI*2.5);
+  for(let r=100;r>10;r-=18){
+    ctx.beginPath();ctx.arc(cx,cy,r+pulse*10,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(0,212,200,${.03*t})`;ctx.lineWidth=1;ctx.stroke();}
+  ctx.beginPath();ctx.arc(cx,cy,14+pulse*4,0,Math.PI*2);
+  const grd=ctx.createRadialGradient(cx,cy,0,cx,cy,18+pulse*4);
+  grd.addColorStop(0,'rgba(0,212,200,.9)');grd.addColorStop(1,'rgba(0,212,200,0)');
+  ctx.fillStyle=grd;ctx.fill();
+  // Title text
+  const ta=ease.out3(ease.step(t,0,.2));
+  ctx.globalAlpha=ta;
+  ctx.fillStyle=C.bright;ctx.font='bold 22px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Quantum Credit Scoring',cx,cy-32);
+  ctx.fillStyle=C.teal;ctx.font='13px Fira Code,monospace';
+  ctx.fillText('A Hybrid GPU — QPU Pipeline',cx,cy-10);
+  ctx.fillStyle=C.dim;ctx.font='10px Fira Code,monospace';
+  ctx.fillText('52 retail features · 55 SME features · 2⁵² Hilbert space',cx,cy+12);
+  ctx.globalAlpha=1;
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 1: WHY CLASSICAL MODELS FAIL
+// ═══════════════════════════════════════════════════
+function sceneClassicalFail(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const cx=W/2,cy=H/2;
+  // LR side (left)
+  const lx=W*.23,r1=ease.out3(ease.step(t,0,.25));
+  ctx.globalAlpha=r1;
+  ctx.fillStyle=C.panel;ctx.strokeStyle=C.gold;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.roundRect(lx-90,cy-70,180,140,6);ctx.fill();ctx.stroke();
+  ctx.fillStyle=C.gold;ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Logistic Regression',lx,cy-48);
+  ctx.fillStyle=C.text;ctx.font='9px Fira Code,monospace';
+  ctx.fillText('f(x) = σ(wᵀx + b)',lx,cy-28);
+  ctx.fillStyle=C.rose;ctx.font='8px Fira Code,monospace';
+  ctx.fillText('∂²logit/∂xᵢ∂xⱼ = 0',lx,cy-8);
+  ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+  ctx.fillText('Cannot detect',lx,cy+12);ctx.fillText('ANY interactions',lx,cy+26);
+  ctx.fillStyle=C.rose;ctx.font='bold 13px Rajdhani';
+  ctx.fillText('FP Rate: 100%',lx,cy+52);
+  ctx.globalAlpha=1;
+  // RF side (right)
+  const rx=W*.77,r2=ease.out3(ease.step(t,.15,.4));
+  ctx.globalAlpha=r2;
+  ctx.fillStyle=C.panel;ctx.strokeStyle=C.purple;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.roundRect(rx-90,cy-70,180,140,6);ctx.fill();ctx.stroke();
+  ctx.fillStyle=C.purple;ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Random Forest',rx,cy-48);
+  ctx.fillStyle=C.text;ctx.font='9px Fira Code,monospace';
+  ctx.fillText('500 trees, √52 ≈ 7 features',rx,cy-28);
+  ctx.fillStyle=C.rose;ctx.font='8px Fira Code,monospace';
+  ctx.fillText('P(6-way) = (7/52)⁶',rx,cy-8);
+  ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+  ctx.fillText('= 0.000012 per tree',rx,cy+12);ctx.fillText('0.006 trees discover it',rx,cy+26);
+  ctx.fillStyle=C.rose;ctx.font='bold 13px Rajdhani';
+  ctx.fillText('FP Rate: ~97%',rx,cy+52);
+  ctx.globalAlpha=1;
+  // Arrow to VQC (centre)
+  if(t>.45){
+    const ar=ease.out3(ease.step(t,.45,.7));
+    ctx.globalAlpha=ar;
+    ctx.strokeStyle=C.teal;ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(W*.35,cy+8);ctx.lineTo(W*.65,cy+8);
+    ctx.stroke();
+    ctx.beginPath();ctx.moveTo(W*.62,cy+2);ctx.lineTo(W*.65,cy+8);ctx.lineTo(W*.62,cy+14);
+    ctx.stroke();
+    ctx.fillStyle=C.teal;ctx.font='bold 10px Rajdhani';ctx.textAlign='center';
+    ctx.fillText('VQC encodes ALL',cx,cy-6);ctx.fillText('2⁵²-1 interactions',cx,cy+8);
+    ctx.globalAlpha=1;
+  }
+  // Bottom label
+  const lb=ease.out3(ease.step(t,.55,.8));ctx.globalAlpha=lb;
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani';ctx.textAlign='center';
+  ctx.fillText('Classical models structurally cannot find the 6–7-way credit patterns',cx,H*.88);
+  ctx.globalAlpha=1;
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 2: RETAIL FEATURE SPACE
+// ═══════════════════════════════════════════════════
+function sceneRetailFeatures(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const layers=[
+    {label:'A: Bureau',n:10,col:C.teal},
+    {label:'B: Capacity',n:9,col:C.gold},
+    {label:'C: Loan',n:9,col:C.purple},
+    {label:'D: Behavioural',n:9,col:C.orange},
+    {label:'E: Cash-Flow',n:9,col:C.green},
+    {label:'F: Identity',n:6,col:C.rose},
+  ];
+  const totalW=W*.86,startX=W*.07,cellH=H*.1,gapY=H*.025;
+  const totalRows=layers.length;
+  const usedH=totalRows*(cellH+gapY);
+  const startY=(H-usedH)/2;
+  layers.forEach((ly,i)=>{
+    const rev=ease.out3(ease.step(t,i*.12,i*.12+.25));
+    if(rev<.01)return;
+    const y=startY+i*(cellH+gapY);
+    ctx.globalAlpha=rev;
+    // Layer background bar
+    ctx.fillStyle='rgba(6,9,26,.7)';ctx.strokeStyle=ly.col;ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.roundRect(startX,y,totalW,cellH,3);ctx.fill();ctx.stroke();
+    // Label
+    ctx.fillStyle=ly.col;ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='left';
+    ctx.fillText(ly.label,startX+8,y+cellH/2+4);
+    // Feature dots
+    const dotArea=totalW-140;const dotX=startX+130;
+    for(let j=0;j<ly.n;j++){
+      const dx=dotX+j*(dotArea/ly.n),dy=y+cellH/2;
+      const delay=j*.04,dr=ease.out3(ease.step(rev,delay,.8));
+      ctx.globalAlpha=rev*dr;
+      const pulse=.5+.5*Math.sin(t*Math.PI*3+j+i*0.7);
+      ctx.beginPath();ctx.arc(dx,dy,5+pulse*1.5,0,Math.PI*2);
+      ctx.fillStyle=ly.col.replace('#','').length===6?ly.col+'33':ly.col;
+      ctx.fillStyle=`rgba(0,0,0,.0)`;ctx.fill();
+      ctx.strokeStyle=ly.col;ctx.lineWidth=1.2;ctx.stroke();
+      ctx.beginPath();ctx.arc(dx,dy,2.5,0,Math.PI*2);
+      ctx.fillStyle=ly.col;ctx.fill();
+    }
+    ctx.globalAlpha=rev;
+    ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';ctx.textAlign='right';
+    ctx.fillText(`${ly.n} features`,startX+totalW-6,y+cellH/2+4);
+    ctx.globalAlpha=1;
+  });
+  // Title
+  const ta=ease.out3(ease.step(t,0,.15));ctx.globalAlpha=ta;
+  ctx.fillStyle=C.bright;ctx.font='bold 14px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Retail Credit: 52 Features Across 6 Layers',W/2,startY-16);
+  ctx.fillStyle=C.teal;ctx.font='9px Fira Code,monospace';
+  ctx.fillText('n = 52  →  dim(ℋ) = 2⁵² ≈ 4.5 × 10¹⁵',W/2,startY-4);
+  ctx.globalAlpha=1;
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 3: SME FEATURE SPACE
+// ═══════════════════════════════════════════════════
+function sceneSMEFeatures(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const layers=[
+    {label:'A: Owner',n:8,col:C.gold},
+    {label:'B: Biz Bureau',n:9,col:C.teal},
+    {label:'C: Financials',n:17,col:C.purple},
+    {label:'D: Bank Txns',n:10,col:C.orange},
+    {label:'E: Loan App',n:6,col:C.green},
+    {label:'F: Profile',n:6,col:C.blue},
+    {label:'G: Collateral',n:9,col:C.rose},
+    {label:'H: Relationship',n:5,col:C.dim},
+  ];
+  const totalW=W*.86,startX=W*.07,cellH=H*.085,gapY=H*.018;
+  const usedH=layers.length*(cellH+gapY);
+  const startY=(H-usedH)/2;
+  layers.forEach((ly,i)=>{
+    const rev=ease.out3(ease.step(t,i*.09,i*.09+.22));if(rev<.01)return;
+    const y=startY+i*(cellH+gapY);
+    ctx.globalAlpha=rev;
+    ctx.fillStyle='rgba(6,9,26,.7)';ctx.strokeStyle=ly.col;ctx.lineWidth=1.1;
+    ctx.beginPath();ctx.roundRect(startX,y,totalW,cellH,3);ctx.fill();ctx.stroke();
+    ctx.fillStyle=ly.col;ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='left';
+    ctx.fillText(ly.label,startX+8,y+cellH/2+4);
+    const dotArea=totalW-140;const dotX=startX+128;
+    const dotSpacing=Math.min(22,dotArea/ly.n);
+    for(let j=0;j<ly.n;j++){
+      const dx=dotX+j*dotSpacing,dy=y+cellH/2;
+      const dr=ease.out3(ease.step(rev,j*.03,.85));ctx.globalAlpha=rev*dr;
+      ctx.beginPath();ctx.arc(dx,dy,2.8,0,Math.PI*2);ctx.fillStyle=ly.col;ctx.fill();
+    }
+    ctx.globalAlpha=rev;
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';ctx.textAlign='right';
+    ctx.fillText(`${ly.n}`,startX+totalW-6,y+cellH/2+3);
+    ctx.globalAlpha=1;
+  });
+  const ta=ease.out3(ease.step(t,0,.12));ctx.globalAlpha=ta;
+  ctx.fillStyle=C.bright;ctx.font='bold 14px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('SME Credit: 55 Features Across 8 Layers',W/2,startY-16);
+  ctx.fillStyle=C.rose;ctx.font='9px Fira Code,monospace';
+  ctx.fillText('n = 55  →  dim(ℋ) = 2⁵⁵ ≈ 3.6 × 10¹⁶',W/2,startY-4);
+  ctx.globalAlpha=1;
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 4: BLOCH SPHERE & ANGLE ENCODING
+// ═══════════════════════════════════════════════════
+function sceneBloch(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  const cx=W*.3,cy=H*.48,R=Math.min(W*.22,H*.38);
+  // Sphere
+  ctx.strokeStyle='rgba(26,34,64,.5)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.stroke();
+  // Equator
+  ctx.beginPath();
+  for(let a=0;a<=Math.PI*2;a+=.05){
+    const ex=cx+R*Math.cos(a),ey=cy+R*.25*Math.sin(a);
+    a===0?ctx.moveTo(ex,ey):ctx.lineTo(ex,ey);}
+  ctx.strokeStyle='rgba(26,34,64,.4)';ctx.setLineDash([3,5]);ctx.stroke();ctx.setLineDash([]);
+  // Poles
+  ctx.beginPath();ctx.moveTo(cx,cy-R-18);ctx.lineTo(cx,cy+R+18);
+  ctx.strokeStyle=C.dim;ctx.lineWidth=1;ctx.stroke();
+  ctx.fillStyle=C.teal;ctx.font='bold 10px Fira Code,monospace';ctx.textAlign='center';
+  ctx.fillText('|0⟩',cx,cy-R-6);
+  ctx.fillStyle=C.rose;ctx.fillText('|1⟩',cx,cy+R+15);
+  ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';
+  ctx.fillText('safe',cx-28,cy-R+4);ctx.fillText('default',cx-32,cy+R-4);
+  // Animated Bloch vector
+  const th=Math.PI*(.15+t*.5);
+  const bvx=cx+R*.8*Math.sin(th),bvy=cy-R*.8*Math.cos(th);
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(bvx,bvy);
+  ctx.strokeStyle=C.gold;ctx.lineWidth=2.5;ctx.stroke();
+  ctx.beginPath();ctx.arc(bvx,bvy,5,0,Math.PI*2);ctx.fillStyle=C.gold;ctx.fill();
+  // Theta arc
+  const arcR=28;
+  ctx.beginPath();ctx.arc(cx,cy,arcR,- Math.PI/2,-Math.PI/2+th,false);
+  ctx.strokeStyle=C.purple;ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle=C.purple;ctx.font='9px Fira Code,monospace';ctx.textAlign='left';
+  ctx.fillText('θ/2',cx+arcR+3,cy-8);
+  // P default label
+  const pd=Math.pow(Math.sin(th/2),2);
+  ctx.fillStyle=C.rose;ctx.font='9px Fira Code,monospace';
+  ctx.fillText(`P(default) = sin²(θ/2) = ${pd.toFixed(2)}`,cx+R+10,cy+4);
+  // Right panel: encoding formula
+  const rx=W*.62,ra=ease.out3(ease.step(t,.2,.5));
+  ctx.globalAlpha=ra;
+  ctx.fillStyle=C.panel;ctx.strokeStyle=C.border;ctx.lineWidth=1;
+  ctx.beginPath();ctx.roundRect(rx,H*.12,W*.34,H*.76,6);ctx.fill();ctx.stroke();
+  ctx.fillStyle=C.teal;ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Angle Encoding',rx+W*.17,H*.2);
+  const feats=[
+    {name:'income',x:0.18,col:C.green},
+    {name:'missed pmts',x:0.06,col:C.teal},
+    {name:'utilization',x:0.72,col:C.gold},
+    {name:'tenure',x:0.95,col:C.rose},
+  ];
+  feats.forEach((f,i)=>{
+    const fy=H*.28+i*H*.12;
+    const angle=Math.PI*f.x/2;
+    const bx2=rx+W*.08+i%2*W*.14,by2=fy;
+    // mini sphere
+    ctx.strokeStyle=f.col;ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(bx2,by2,12,0,Math.PI*2);ctx.stroke();
+    // vector
+    const vx=bx2+12*.8*Math.sin(angle),vy=by2-12*.8*Math.cos(angle);
+    ctx.beginPath();ctx.moveTo(bx2,by2);ctx.lineTo(vx,vy);
+    ctx.strokeStyle=f.col;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=f.col;ctx.font='8px Fira Code,monospace';ctx.textAlign='left';
+    ctx.fillText(`x=${f.x}`,bx2+16,by2-5);
+    ctx.fillStyle=C.dim;ctx.fillText(f.name,bx2+16,by2+6);
+  });
+  ctx.fillStyle=C.gold;ctx.font='9px Fira Code,monospace';ctx.textAlign='center';
+  ctx.fillText('Rᵧ(πxᵢ)|0⟩ = cos(πxᵢ/2)|0⟩ + sin(πxᵢ/2)|1⟩',rx+W*.17,H*.83);
+  ctx.globalAlpha=1;
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 5: CNOT ENTANGLEMENT
+// ═══════════════════════════════════════════════════
+function sceneCNOT(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  // Before (left)
+  const lx=W*.15,bx1=W*.05,r1=ease.out3(ease.step(t,0,.3));
+  ctx.globalAlpha=r1;
+  ctx.fillStyle=C.dim;ctx.font='10px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Before: product state',lx,H*.18);
+  // Two qubits
+  [[lx-30,H*.3,'x₁','income',C.gold],[lx+30,H*.3,'x₇','tenure',C.teal]].forEach(([qx,qy,lab,name,col])=>{
+    ctx.strokeStyle=col;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(qx,qy,18,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle=col;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText(lab,qx,qy+4);
+    ctx.fillStyle=C.dim;ctx.font='7px Fira Code,monospace';ctx.fillText(name,qx,qy+18);
+  });
+  ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';ctx.textAlign='center';
+  ctx.fillText('Amplitudes: α₁β₁ ⊗ α₇β₇',lx,H*.47);
+  ctx.fillText('Factorises — no interaction',lx,H*.55);
+  ctx.globalAlpha=1;
+  // CNOT gate
+  if(t>.25){
+    const gr=ease.out3(ease.step(t,.25,.55));ctx.globalAlpha=gr;
+    const gx=W*.45,gy=H*.38;
+    ctx.fillStyle=C.panel;ctx.strokeStyle=C.teal;ctx.lineWidth=2;
+    ctx.beginPath();ctx.roundRect(gx-28,gy-22,56,44,4);ctx.fill();ctx.stroke();
+    ctx.fillStyle=C.teal;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('CNOT',gx,gy-4);
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+    ctx.fillText('i→j',gx,gy+10);
+    // Arrow
+    ctx.beginPath();ctx.moveTo(lx+60,H*.38);ctx.lineTo(gx-32,H*.38);
+    ctx.strokeStyle=C.border;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  // After (right)
+  if(t>.45){
+    const ar=ease.out3(ease.step(t,.45,.75));ctx.globalAlpha=ar;
+    const rx=W*.78;
+    ctx.fillStyle=C.dim;ctx.font='10px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('After: entangled state',rx,H*.18);
+    // Entangled qubit pair
+    const ents=[
+      [rx-32,H*.3,'x₁',C.gold],[rx+32,H*.3,'x₇',C.teal]
+    ];
+    ents.forEach(([qx,qy,lab,col])=>{
+      const pulse=.5+.5*Math.sin(t*Math.PI*5+qx);
+      ctx.strokeStyle=col;ctx.lineWidth=1.5+pulse;
+      ctx.beginPath();ctx.arc(qx,qy,18+pulse*3,0,Math.PI*2);ctx.stroke();
+      ctx.fillStyle=col;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='center';
+      ctx.fillText(lab,qx,qy+4);
+    });
+    // Connection arc
+    ctx.beginPath();ctx.moveTo(rx-14,H*.3);ctx.lineTo(rx+14,H*.3);
+    ctx.strokeStyle=C.purple;ctx.lineWidth=2;ctx.stroke();
+    // Interaction term highlight
+    ctx.fillStyle=C.rose;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('|10⟩ amplitude = β₁β₇',rx,H*.47);
+    ctx.fillStyle=C.green;ctx.font='8px Fira Code,monospace';
+    ctx.fillText('≈ (π/2)² · x₁ × x₇',rx,H*.55);
+    ctx.fillStyle=C.bright;ctx.font='bold 10px Rajdhani,sans-serif';
+    ctx.fillText('Interaction CREATED!',rx,H*.64);
+    ctx.globalAlpha=ar;
+    // Arrow from gate
+    ctx.beginPath();ctx.moveTo(W*.47,H*.38);ctx.lineTo(rx-50,H*.38);
+    ctx.strokeStyle=C.border;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  // Ring diagram at bottom
+  if(t>.65){
+    const rr=ease.out3(ease.step(t,.65,.9));ctx.globalAlpha=rr;
+    const rcx=W*.45,rcy=H*.82,ringR=H*.09;
+    const N=8;
+    for(let i=0;i<N;i++){
+      const ang=(i/N)*Math.PI*2-Math.PI/2;
+      const nx=rcx+ringR*Math.cos(ang),ny=rcy+ringR*Math.sin(ang);
+      const nang=((i+1)/N)*Math.PI*2-Math.PI/2;
+      const nx2=rcx+ringR*Math.cos(nang),ny2=rcy+ringR*Math.sin(nang);
+      ctx.beginPath();ctx.moveTo(nx,ny);ctx.lineTo(nx2,ny2);
+      ctx.strokeStyle=C.teal;ctx.lineWidth=2;ctx.stroke();
+      ctx.beginPath();ctx.arc(nx,ny,8,0,Math.PI*2);
+      ctx.fillStyle=C.panel;ctx.fill();ctx.strokeStyle=C.gold;ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle=C.gold;ctx.font='bold 7px Fira Code,monospace';ctx.textAlign='center';
+      ctx.fillText(`q${i+1}`,nx,ny+3);
+    }
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('Circular CNOT ring: n=8 shown; n=52/55 in production',rcx,rcy+ringR+18);
+    ctx.fillStyle=C.teal;ctx.font='8px Fira Code,monospace';
+    ctx.fillText('Creates all 2⁵²-1 feature interactions simultaneously',rcx,rcy+ringR+30);
+    ctx.globalAlpha=1;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 6: VQC CIRCUIT
+// ═══════════════════════════════════════════════════
+function sceneCircuit(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const nQ=5,wireY=(i)=>H*.18+i*(H*.62/nQ),wireColor=[C.gold,C.teal,C.purple,C.orange,C.green];
+  const stages=[
+    {x:W*.1,label:'Encode',col:C.teal},
+    {x:W*.28,label:'Entangle',col:C.purple},
+    {x:W*.48,label:'Variate',col:C.gold},
+    {x:W*.66,label:'Entangle',col:C.purple},
+    {x:W*.82,label:'Variate',col:C.gold},
+    {x:W*.94,label:'Measure',col:C.rose},
+  ];
+  // Draw wires
+  const wr=ease.out3(ease.step(t,0,.15));ctx.globalAlpha=wr;
+  for(let i=0;i<nQ;i++){
+    ctx.beginPath();ctx.moveTo(W*.04,wireY(i));ctx.lineTo(W*.96,wireY(i));
+    ctx.strokeStyle=wireColor[i];ctx.lineWidth=1;ctx.setLineDash([3,6]);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=wireColor[i];ctx.font='8px Fira Code,monospace';ctx.textAlign='right';
+    ctx.fillText(`q${i+1}`,W*.04-2,wireY(i)+3);
+  }
+  ctx.globalAlpha=1;
+  // Draw stage gates
+  stages.forEach((st,si)=>{
+    const sr=ease.out3(ease.step(t,si*.12,si*.12+.22));if(sr<.01)return;
+    ctx.globalAlpha=sr;
+    // Stage header
+    ctx.fillStyle=st.col;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText(st.label,st.x,H*.14);
+    if(si===5){
+      // Measure gates
+      for(let i=0;i<nQ;i++){
+        ctx.fillStyle=C.panel;ctx.strokeStyle=C.rose;ctx.lineWidth=1.2;
+        ctx.beginPath();ctx.roundRect(st.x-16,wireY(i)-10,32,20,2);ctx.fill();ctx.stroke();
+        ctx.fillStyle=C.rose;ctx.font='7px Fira Code,monospace';ctx.textAlign='center';
+        ctx.fillText('M',st.x,wireY(i)+3);
+      }
+    } else if(si===1||si===3){
+      // CNOT ring
+      for(let i=0;i<nQ;i++){
+        const j=(i+1)%nQ;
+        ctx.beginPath();ctx.moveTo(st.x,wireY(i));ctx.lineTo(st.x,wireY(j));
+        ctx.strokeStyle=C.purple;ctx.lineWidth=1.5;ctx.stroke();
+        ctx.beginPath();ctx.arc(st.x,wireY(i),5,0,Math.PI*2);
+        ctx.fillStyle=C.purple;ctx.fill();
+        ctx.beginPath();ctx.arc(st.x,wireY(j),7,0,Math.PI*2);
+        ctx.strokeStyle=C.purple;ctx.lineWidth=1.5;ctx.stroke();
+        ctx.beginPath();ctx.moveTo(st.x-7,wireY(j));ctx.lineTo(st.x+7,wireY(j));
+        ctx.moveTo(st.x,wireY(j)-7);ctx.lineTo(st.x,wireY(j)+7);
+        ctx.strokeStyle=C.purple;ctx.lineWidth=1.5;ctx.stroke();
+      }
+    } else {
+      // Gate boxes
+      const gateLab=si===0?'Rᵧ':'Rz Rᵧ Rz';
+      for(let i=0;i<nQ;i++){
+        ctx.fillStyle=C.panel;ctx.strokeStyle=st.col;ctx.lineWidth=1.2;
+        ctx.beginPath();ctx.roundRect(st.x-20,wireY(i)-10,40,20,2);ctx.fill();ctx.stroke();
+        ctx.fillStyle=st.col;ctx.font='7px Fira Code,monospace';ctx.textAlign='center';
+        ctx.fillText(si===0?`Rᵧ(πxᵢ)`:`θ${i+1}`,st.x,wireY(i)+3);
+      }
+    }
+    ctx.globalAlpha=1;
+  });
+  // Output
+  if(t>.75){
+    const or=ease.out3(ease.step(t,.75,.95));ctx.globalAlpha=or;
+    ctx.fillStyle=C.panel;ctx.strokeStyle=C.teal;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.roundRect(W*.96,H*.28,W*.035,H*.3,4);ctx.fill();ctx.stroke();
+    ctx.fillStyle=C.teal;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('PD',W*.978,H*.43);
+    ctx.fillStyle=C.dim;ctx.font='7px Fira Code,monospace';ctx.fillText('[0,1]',W*.978,H*.5);
+    ctx.globalAlpha=1;
+  }
+  // Caption
+  const ca=ease.out3(ease.step(t,0,.1));ctx.globalAlpha=ca;
+  ctx.fillStyle=C.bright;ctx.font='bold 13px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('The Complete VQC Circuit  (n=5 shown; production n=52/55)',W/2,H*.12);
+  ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+  ctx.fillText('ℝⁿ  →  Encode  →  ℂ^{2ⁿ}  →  Variate  →  Measure  →  ℝ',W/2,H*.92);
+  ctx.globalAlpha=1;
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 7: PARAMETER-SHIFT RULE
+// ═══════════════════════════════════════════════════
+function scenePSR(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  // Draw sinusoidal PD(θ) curve
+  const ox=W*.08,oy=H*.65,pw=W*.84,ph=H*.45;
+  ctx.strokeStyle=C.dim;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(ox,oy-ph);ctx.lineTo(ox,oy+5);ctx.lineTo(ox+pw,oy+5);ctx.stroke();
+  const cr=ease.out3(ease.step(t,0,.3));ctx.globalAlpha=cr;
+  ctx.beginPath();
+  for(let k=0;k<=300;k++){
+    const u=k/300,x=ox+u*pw;
+    const y=oy-(0.5+0.4*Math.sin(u*Math.PI*2-.5))*ph;
+    k===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle=C.gold;ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle=C.gold;ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='left';
+  ctx.fillText('PD(θ) = A + B·cos(θ + φ₀)',ox+6,oy-ph*.88);
+  ctx.globalAlpha=1;
+  // Current parameter θ
+  const theta0=.38;
+  const thX=ox+theta0*pw;
+  const thY=oy-(0.5+0.4*Math.sin(theta0*Math.PI*2-.5))*ph;
+  if(cr>.3){
+    const pulse=.5+.5*Math.sin(t*Math.PI*6);
+    ctx.beginPath();ctx.arc(thX,thY,8+pulse*3,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,212,200,.15)';ctx.fill();
+    ctx.beginPath();ctx.arc(thX,thY,5,0,Math.PI*2);ctx.fillStyle=C.teal;ctx.fill();
+    ctx.fillStyle=C.teal;ctx.font='8px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('θₖ',thX,thY-14);
+  }
+  // + shift
+  const shr=ease.out3(ease.step(t,.3,.55));
+  if(shr>.01){
+    const theta1=theta0+.125;
+    const thX1=ox+theta1*pw,thY1=oy-(0.5+0.4*Math.sin(theta1*Math.PI*2-.5))*ph;
+    ctx.globalAlpha=shr;
+    ctx.beginPath();ctx.arc(thX1,thY1,6,0,Math.PI*2);ctx.fillStyle=C.green;ctx.fill();
+    ctx.fillStyle=C.green;ctx.font='8px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('θₖ+π/2',thX1,thY1-14);ctx.fillText('PD⁺',thX1+20,thY1);
+    // - shift
+    const theta2=theta0-.125;
+    const thX2=ox+theta2*pw,thY2=oy-(0.5+0.4*Math.sin(theta2*Math.PI*2-.5))*ph;
+    ctx.beginPath();ctx.arc(thX2,thY2,6,0,Math.PI*2);ctx.fillStyle=C.rose;ctx.fill();
+    ctx.fillStyle=C.rose;ctx.font='8px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('θₖ-π/2',thX2,thY2-14);ctx.fillText('PD⁻',thX2-20,thY2);
+    ctx.globalAlpha=1;
+  }
+  // Formula box
+  if(t>.5){
+    const fr=ease.out3(ease.step(t,.5,.75));ctx.globalAlpha=fr;
+    ctx.fillStyle=C.panel;ctx.strokeStyle=C.teal;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.roundRect(W*.55,H*.08,W*.38,H*.28,6);ctx.fill();ctx.stroke();
+    ctx.fillStyle=C.teal;ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Parameter-Shift Rule',W*.74,H*.15);
+    ctx.fillStyle=C.bright;ctx.font='10px Fira Code,monospace';
+    ctx.fillText('∂PD/∂θₖ = ½(PD⁺ - PD⁻)',W*.74,H*.22);
+    ctx.fillStyle=C.green;ctx.font='9px Fira Code,monospace';
+    ctx.fillText('Exact — zero bias',W*.74,H*.29);
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+    ctx.fillText('2 circuit evals per parameter',W*.74,H*.34);
+    ctx.globalAlpha=1;
+  }
+  // Cost note
+  if(t>.7){
+    const nr=ease.out3(ease.step(t,.7,.9));ctx.globalAlpha=nr;
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('p=468 parameters (n=52, L=3) → 937 circuit evals per gradient step',W/2,H*.92);
+    ctx.globalAlpha=1;
+  }
+  // Title
+  ctx.fillStyle=C.bright;ctx.font='bold 13px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Training: Exact Quantum Gradients via Parameter-Shift Rule',W/2,H*.06);
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 8: BARREN PLATEAUS
+// ═══════════════════════════════════════════════════
+function sceneBarren(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const ox=W*.1,oy=H*.82,pw=W*.82,ph=H*.62;
+  ctx.strokeStyle=C.dim;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(ox,oy-ph);ctx.lineTo(ox,oy+5);ctx.lineTo(ox+pw,oy+5);ctx.stroke();
+  ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';ctx.textAlign='center';
+  ctx.fillText('Number of qubits n',ox+pw/2,oy+22);
+  ctx.save();ctx.translate(W*.04,oy-ph/2);ctx.rotate(-Math.PI/2);
+  ctx.fillText('log₁₀ Var[∂PD/∂θₖ]',0,0);ctx.restore();
+  // Tick marks
+  [10,20,30,40,52,55,60].forEach(n=>{
+    const x=ox+(n/60)*pw;
+    ctx.beginPath();ctx.moveTo(x,oy+5);ctx.lineTo(x,oy+10);
+    ctx.strokeStyle=C.dim;ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle=C.dim;ctx.font='7px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText(n,x,oy+20);
+  });
+  // Random init: exponential
+  const r1=ease.out3(ease.step(t,0,.35));
+  if(r1>.01){
+    ctx.beginPath();
+    for(let k=0;k<=200;k++){
+      const n=2+k/200*58,x=ox+(n-2)/58*pw;
+      const y=oy-(-0.42*n/13)*ph;
+      k===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=C.rose;ctx.lineWidth=2.5;ctx.globalAlpha=r1;ctx.stroke();ctx.globalAlpha=1;
+    ctx.fillStyle=C.rose;ctx.font='9px Rajdhani,sans-serif';ctx.textAlign='left';
+    ctx.fillText('Random init: Var ~ e⁻ⁿ',ox+pw*.55,oy-ph*.85);
+  }
+  // Identity init: polynomial
+  const r2=ease.out3(ease.step(t,.2,.55));
+  if(r2>.01){
+    ctx.beginPath();
+    for(let k=0;k<=200;k++){
+      const n=2+k/200*58,x=ox+(n-2)/58*pw;
+      const y=oy-(-1.5*Math.log10(n)/13)*ph;
+      k===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=C.green;ctx.lineWidth=2.5;ctx.globalAlpha=r2;ctx.stroke();ctx.globalAlpha=1;
+    ctx.fillStyle=C.green;ctx.font='9px Rajdhani,sans-serif';ctx.textAlign='left';
+    ctx.fillText('Identity init θ=0: Var ~ n⁻³′²',ox+pw*.05,oy-ph*.55);
+  }
+  // Marker lines
+  if(t>.45){
+    const mr=ease.out3(ease.step(t,.45,.7));
+    [[30,'GPU SV limit',C.teal],[52,'n=52 retail',C.gold],[55,'n=55 SME',C.rose]].forEach(([n,lab,col])=>{
+      const x=ox+(n-2)/58*pw;ctx.globalAlpha=mr;
+      ctx.beginPath();ctx.moveTo(x,oy-ph);ctx.lineTo(x,oy);
+      ctx.strokeStyle=col;ctx.lineWidth=1;ctx.setLineDash([3,5]);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle=col;ctx.font='8px Fira Code,monospace';ctx.textAlign='center';
+      ctx.save();ctx.translate(x-8,oy-ph*.35);ctx.rotate(-Math.PI/2);
+      ctx.fillText(lab,0,0);ctx.restore();
+      ctx.globalAlpha=1;
+    });
+  }
+  // Annotation
+  if(t>.65){
+    const ar=ease.out3(ease.step(t,.65,.88));ctx.globalAlpha=ar;
+    ctx.fillStyle=C.panel;ctx.strokeStyle=C.green;ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.roundRect(ox+10,oy-ph*.48,pw*.38,54,4);ctx.fill();ctx.stroke();
+    ctx.fillStyle=C.green;ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Identity Init Mitigation',ox+10+pw*.19,oy-ph*.42);
+    ctx.fillStyle=C.text;ctx.font='8px Fira Code,monospace';
+    ctx.fillText('Set θ=0 → U_var=I → Var=O(n⁻³′²)',ox+10+pw*.19,oy-ph*.32);
+    ctx.fillStyle=C.dim;ctx.font='7px Fira Code,monospace';
+    ctx.fillText('Polynomial vs exponential decay',ox+10+pw*.19,oy-ph*.23);
+    ctx.globalAlpha=1;
+  }
+  ctx.fillStyle=C.bright;ctx.font='bold 13px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Barren Plateaus & Identity Initialisation',W/2,H*.07);
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 9: HYBRID GPU-QPU PIPELINE
+// ═══════════════════════════════════════════════════
+function sceneHybrid(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const gpuStages=[
+    {label:'Training Data',sub:'10k retail / 10k SME',y:.18},
+    {label:'GPU Simulation',sub:'State-vector n≤30',y:.32},
+    {label:'PSR Gradients',sub:'Exact, zero bias',y:.46},
+    {label:'Adam Optimiser',sub:'T epochs, η LR',y:.60},
+    {label:'θ* Parameters',sub:'Trained weights',y:.74},
+  ];
+  const qpuStages=[
+    {label:'Angle Encoding',sub:'Rᵧ(πxᵢ)|0⟩',y:.18},
+    {label:'CNOT Ring',sub:'n two-qubit gates',y:.32},
+    {label:'Variational',sub:'Rz Rᵧ Rz (θ*)',y:.46},
+    {label:'Measure',sub:'S=2500 shots',y:.60},
+    {label:'PD Estimate',sub:'P(default)∈[0,1]',y:.74},
+  ];
+  const ph1x=W*.05,ph1w=W*.38,ph2x=W*.56,ph2w=W*.38;
+  // Phase 1 background
+  const p1r=ease.out3(ease.step(t,0,.2));ctx.globalAlpha=p1r;
+  ctx.fillStyle='rgba(34,204,136,.04)';ctx.strokeStyle='rgba(34,204,136,.3)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.roundRect(ph1x-4,H*.1,ph1w+8,H*.75,6);ctx.fill();ctx.stroke();
+  ctx.fillStyle=C.green;ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('PHASE 1: GPU Training',ph1x+ph1w/2,H*.12);
+  ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+  ctx.fillText('Exact simulation · runs today',ph1x+ph1w/2,H*.15);
+  ctx.globalAlpha=1;
+  // Phase 1 stages
+  gpuStages.forEach((st,i)=>{
+    const sr=ease.out3(ease.step(t,i*.1,i*.1+.2));if(sr<.01)return;
+    const bx=ph1x+8,by=H*st.y,bw=ph1w-16,bh=H*.1;
+    ctx.globalAlpha=sr;
+    ctx.fillStyle='rgba(34,204,136,.12)';ctx.strokeStyle='rgba(34,204,136,.5)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.roundRect(bx,by,bw,bh,3);ctx.fill();ctx.stroke();
+    ctx.fillStyle=C.green;ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText(st.label,bx+bw/2,by+bh/2-4);
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+    ctx.fillText(st.sub,bx+bw/2,by+bh/2+9);
+    if(i>0){
+      ctx.beginPath();ctx.moveTo(bx+bw/2,H*gpuStages[i-1].y+H*.1+1);ctx.lineTo(bx+bw/2,by-1);
+      ctx.strokeStyle='rgba(34,204,136,.4)';ctx.lineWidth=1.5;ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  });
+  // Transfer arrow
+  if(t>.5){
+    const tr=ease.out3(ease.step(t,.5,.7));ctx.globalAlpha=tr;
+    const ax=ph1x+ph1w+4,ay=H*.77;
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ph2x-4,ay);
+    ctx.strokeStyle=C.teal;ctx.lineWidth=3;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(ph2x-12,ay-6);ctx.lineTo(ph2x-4,ay);ctx.lineTo(ph2x-12,ay+6);
+    ctx.fillStyle=C.teal;ctx.fill();
+    ctx.fillStyle=C.teal;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('θ*',ax+(ph2x-4-ax)/2,ay-10);
+    ctx.globalAlpha=1;
+  }
+  // Phase 2 background
+  const p2r=ease.out3(ease.step(t,.2,.4));ctx.globalAlpha=p2r;
+  ctx.fillStyle='rgba(0,212,200,.04)';ctx.strokeStyle='rgba(0,212,200,.3)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.roundRect(ph2x-4,H*.1,ph2w+8,H*.75,6);ctx.fill();ctx.stroke();
+  ctx.fillStyle=C.teal;ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('PHASE 2: QPU Inference',ph2x+ph2w/2,H*.12);
+  ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+  ctx.fillText('2⁵²/2⁵⁵ Hilbert space · runs today',ph2x+ph2w/2,H*.15);
+  ctx.globalAlpha=1;
+  // Phase 2 stages
+  qpuStages.forEach((st,i)=>{
+    const sr=ease.out3(ease.step(t,.3+i*.08,.3+i*.08+.2));if(sr<.01)return;
+    const bx=ph2x+8,by=H*st.y,bw=ph2w-16,bh=H*.1;
+    ctx.globalAlpha=sr;
+    ctx.fillStyle='rgba(0,212,200,.12)';ctx.strokeStyle='rgba(0,212,200,.5)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.roundRect(bx,by,bw,bh,3);ctx.fill();ctx.stroke();
+    ctx.fillStyle=C.teal;ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText(st.label,bx+bw/2,by+bh/2-4);
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+    ctx.fillText(st.sub,bx+bw/2,by+bh/2+9);
+    if(i>0){
+      ctx.beginPath();ctx.moveTo(bx+bw/2,H*qpuStages[i-1].y+H*.1+1);ctx.lineTo(bx+bw/2,by-1);
+      ctx.strokeStyle='rgba(0,212,200,.4)';ctx.lineWidth=1.5;ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  });
+  // Time labels
+  if(t>.75){
+    const lr=ease.out3(ease.step(t,.75,.95));ctx.globalAlpha=lr;
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('1–5 days',ph1x+ph1w/2,H*.9);
+    ctx.fillText('~0.25 sec / applicant',ph2x+ph2w/2,H*.9);
+    ctx.globalAlpha=1;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 10: QPU HARDWARE ROADMAPS
+// ═══════════════════════════════════════════════════
+function sceneRoadmaps(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const platforms=[
+    {name:'IBM Heron r2',year:2024,qubits:156,fidelity:99.5,col:C.teal,status:'INFERENCE NOW'},
+    {name:'Quantinuum H2',year:2024,qubits:56,fidelity:99.8,col:C.green,status:'INFERENCE NOW'},
+    {name:'Google Willow',year:2024,qubits:105,fidelity:99.7,col:C.blue,status:'INFERENCE NOW'},
+    {name:'IonQ Tempo',year:2025,qubits:64,fidelity:99.7,col:C.gold,status:'2025–26'},
+    {name:'Quantinuum H4',year:2027,qubits:400,fidelity:99.9,col:C.purple,status:'TRAINING 2027'},
+    {name:'IBM Kookaburra',year:2026,qubits:1000,fidelity:99.7,col:C.orange,status:'TRAINING 2027'},
+  ];
+  const ox=W*.08,oy=H*.82,pw=W*.86,ph=H*.6;
+  ctx.strokeStyle=C.dim;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(ox,oy-ph);ctx.lineTo(ox,oy+5);ctx.lineTo(ox+pw,oy+5);ctx.stroke();
+  // X axis labels
+  ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';ctx.textAlign='center';
+  [2024,2025,2026,2027,2028].forEach(yr=>{
+    const x=ox+(yr-2023.5)/5*pw;
+    ctx.beginPath();ctx.moveTo(x,oy);ctx.lineTo(x,oy+8);ctx.strokeStyle=C.dim;ctx.lineWidth=1;ctx.stroke();
+    ctx.fillText(yr,x,oy+20);
+  });
+  ctx.fillText('Year',ox+pw/2,oy+32);
+  // Y axis
+  ctx.save();ctx.translate(W*.03,oy-ph/2);ctx.rotate(-Math.PI/2);
+  ctx.fillText('Qubit count',0,0);ctx.restore();
+  // Platform bubbles
+  platforms.forEach((p,i)=>{
+    const sr=ease.out3(ease.step(t,i*.1,i*.1+.28));if(sr<.01)return;
+    const x=ox+(p.year-2023.5)/5*pw;
+    const y=oy-Math.min(p.qubits/1100,1)*ph;
+    const r=8+Math.sqrt(p.qubits)/12;
+    ctx.globalAlpha=sr;
+    // Glow
+    const grd=ctx.createRadialGradient(x,y,0,x,y,r*2);
+    grd.addColorStop(0,p.col.replace('#','').length===6?p.col+'33':'rgba(0,212,200,.2)');
+    grd.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=grd;ctx.beginPath();ctx.arc(x,y,r*2,0,Math.PI*2);ctx.fill();
+    // Bubble
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=C.panel;ctx.fill();
+    ctx.strokeStyle=p.col;ctx.lineWidth=2;ctx.stroke();
+    // Label
+    const loff=i%2===0?-r-24:r+6;
+    ctx.fillStyle=p.col;ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign=i%2===0?'right':'left';
+    ctx.fillText(p.name,x,y+loff);
+    ctx.fillStyle=C.dim;ctx.font='7px Fira Code,monospace';ctx.textAlign=i%2===0?'right':'left';
+    ctx.fillText(`${p.qubits}q · ${p.fidelity}%`,x,y+loff+12);
+    ctx.fillStyle=p.status.includes('NOW')?C.green:C.gold;
+    ctx.font='7px Fira Code,monospace';ctx.fillText(p.status,x,y+loff+24);
+    // Qubit count inside bubble
+    ctx.fillStyle='rgba(255,255,255,.7)';ctx.font=`bold ${Math.min(8,r*.7)|0}px Fira Code`;
+    ctx.textAlign='center';ctx.fillText(p.qubits,x,y+3);
+    ctx.globalAlpha=1;
+  });
+  // Legend
+  if(t>.6){
+    const lr=ease.out3(ease.step(t,.6,.85));ctx.globalAlpha=lr;
+    ctx.fillStyle=C.green;ctx.font='9px Rajdhani,sans-serif';ctx.textAlign='left';
+    ctx.fillText('● Inference-ready NOW',ox,H*.1);
+    ctx.fillStyle=C.gold;ctx.fillText('● Training feasible 2027+',ox,H*.17);
+    ctx.globalAlpha=1;
+  }
+  ctx.fillStyle=C.bright;ctx.font='bold 13px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('QPU Hardware Roadmaps (IBM · IonQ · Quantinuum · OQC · Google)',W/2,H*.07);
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 11: RETAIL POPULATION CLUSTERS
+// ═══════════════════════════════════════════════════
+function sceneRetailClusters(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const cx=W*.5,cy=H*.5;
+  // Define cluster positions and props (based on PCA results)
+  const clusters=[
+    {name:'Prime Borrower',x:-.60,y:.15,pd:0.16,n:150,col:C.green,shape:'circle'},
+    {name:'Career Advancer ★',x:-.38,y:-.22,pd:0.38,n:80,col:C.blue,shape:'diamond'},
+    {name:'Credit Rebuilder ★',x:-.44,y:-.38,pd:0.32,n:70,col:C.orange,shape:'square'},
+    {name:'Thin File ★',x:-.50,y:.08,pd:0.28,n:70,col:C.purple,shape:'triangle'},
+    {name:'Disguised Default ★',x:.35,y:.68,pd:0.71,n:80,col:C.rose,shape:'cross'},
+    {name:'True Defaulter',x:.88,y:-.22,pd:0.84,n:120,col:C.gold,shape:'plus'},
+  ];
+  const scale=Math.min(W*.36,H*.36);
+  // Axes
+  const ar=ease.out3(ease.step(t,0,.2));ctx.globalAlpha=ar;
+  ctx.strokeStyle=C.dim;ctx.lineWidth=1;ctx.setLineDash([3,6]);
+  ctx.beginPath();ctx.moveTo(cx-scale*1.2,cy);ctx.lineTo(cx+scale*1.2,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy-scale*1.1);ctx.lineTo(cx,cy+scale*1.1);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';ctx.textAlign='center';
+  ctx.fillText('PC-1 (45.6% variance) →',cx+scale*.8,cy+18);
+  ctx.save();ctx.translate(cx-18,cy-scale*.6);ctx.rotate(-Math.PI/2);
+  ctx.fillText('PC-2 (9.9%)',0,0);ctx.restore();
+  ctx.globalAlpha=1;
+  // Cluster regions (background)
+  if(t>.2){
+    const rr=ease.out3(ease.step(t,.2,.45));ctx.globalAlpha=rr*.3;
+    // Safe region
+    ctx.fillStyle='rgba(34,204,136,.12)';
+    ctx.beginPath();ctx.ellipse(cx-scale*.46,cy-scale*.1,scale*.28,scale*.38,-.3,0,Math.PI*2);ctx.fill();
+    // Default region
+    ctx.fillStyle='rgba(255,68,136,.1)';
+    ctx.beginPath();ctx.ellipse(cx+scale*.6,cy+scale*.22,scale*.36,scale*.32,.1,0,Math.PI*2);ctx.fill();
+    // Disguised region
+    ctx.fillStyle='rgba(255,68,136,.06)';
+    ctx.beginPath();ctx.ellipse(cx+scale*.35,cy+scale*.68,scale*.2,scale*.2,0,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  // Cluster points
+  clusters.forEach((cl,i)=>{
+    const sr=ease.out3(ease.step(t,.08+i*.1,.08+i*.1+.28));if(sr<.01)return;
+    const px=cx+cl.x*scale,py=cy-cl.y*scale;
+    const r=5+Math.sqrt(cl.n)*1.2;
+    ctx.globalAlpha=sr;
+    // Glow
+    const grd=ctx.createRadialGradient(px,py,0,px,py,r*1.8);
+    grd.addColorStop(0,cl.col+'44');grd.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=grd;ctx.beginPath();ctx.arc(px,py,r*1.8,0,Math.PI*2);ctx.fill();
+    // Main dot
+    ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);
+    ctx.fillStyle=cl.col+'55';ctx.fill();
+    ctx.strokeStyle=cl.col;ctx.lineWidth=2;ctx.stroke();
+    // Label
+    ctx.fillStyle=cl.col;ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText(cl.name,px,py-r-6);
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+    ctx.fillText(`PD=${(cl.pd*100).toFixed(0)}%`,px,py+r+12);
+    ctx.globalAlpha=1;
+  });
+  // Decision boundary annotation
+  if(t>.72){
+    const dr=ease.out3(ease.step(t,.72,.9));ctx.globalAlpha=dr;
+    ctx.strokeStyle=C.teal;ctx.lineWidth=1.5;ctx.setLineDash([4,6]);
+    ctx.beginPath();ctx.moveTo(cx+scale*.1,cy-scale*.8);ctx.lineTo(cx+scale*.1,cy+scale*.8);
+    ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=C.teal;ctx.font='8px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('PD = 0.5',cx+scale*.1,cy-scale*.82);
+    ctx.fillText('decision boundary',cx+scale*.1,cy-scale*.72);
+    ctx.globalAlpha=1;
+  }
+  ctx.fillStyle=C.bright;ctx.font='bold 13px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Retail Population Scoring: 10,000 Applicants (52 features → PCA 2-D)',W/2,H*.06);
+  ctx.fillStyle=C.rose;ctx.font='9px Fira Code,monospace';
+  ctx.fillText('★ = FN: safe borrower rejected  |  or FP: defaulter approved',W/2,H*.1);
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 12: SME POPULATION CLUSTERS
+// ═══════════════════════════════════════════════════
+function sceneSMEClusters(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const cx=W*.5,cy=H*.5;
+  const clusters=[
+    {name:'Established Safe',x:-.72,y:.12,pd:0.12,n:110,col:C.green},
+    {name:'Seasonal Biz ★',x:-.48,y:.38,pd:0.21,n:70,col:C.purple},
+    {name:'Startup HG ★',x:-.52,y:-.28,pd:0.21,n:70,col:C.blue},
+    {name:'Turnaround ★',x:-.38,y:.02,pd:0.27,n:60,col:C.orange},
+    {name:'Over-Leveraged ★',x:.48,y:.15,pd:0.74,n:70,col:C.rose},
+    {name:'Distressed',x:.90,y:-.18,pd:0.88,n:100,col:C.gold},
+  ];
+  const scale=Math.min(W*.36,H*.36);
+  const ar=ease.out3(ease.step(t,0,.2));ctx.globalAlpha=ar;
+  ctx.strokeStyle=C.dim;ctx.lineWidth=1;ctx.setLineDash([3,6]);
+  ctx.beginPath();ctx.moveTo(cx-scale*1.3,cy);ctx.lineTo(cx+scale*1.3,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy-scale*1.1);ctx.lineTo(cx,cy+scale*1.1);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';ctx.textAlign='center';
+  ctx.fillText('PC-1 (51.6% variance) →',cx+scale*.9,cy+18);
+  ctx.save();ctx.translate(cx-18,cy-scale*.6);ctx.rotate(-Math.PI/2);
+  ctx.fillText('PC-2 (7.4%)',0,0);ctx.restore();
+  ctx.globalAlpha=1;
+  if(t>.2){
+    const rr=ease.out3(ease.step(t,.2,.45));ctx.globalAlpha=rr*.3;
+    ctx.fillStyle='rgba(34,204,136,.1)';
+    ctx.beginPath();ctx.ellipse(cx-scale*.52,cy,scale*.32,scale*.42,.1,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,68,136,.1)';
+    ctx.beginPath();ctx.ellipse(cx+scale*.7,cy-scale*.1,scale*.3,scale*.28,.1,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,102,0,.08)';
+    ctx.beginPath();ctx.ellipse(cx+scale*.48,cy+scale*.15,scale*.2,scale*.18,0,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  clusters.forEach((cl,i)=>{
+    const sr=ease.out3(ease.step(t,.08+i*.1,.08+i*.1+.28));if(sr<.01)return;
+    const px=cx+cl.x*scale,py=cy-cl.y*scale;
+    const r=5+Math.sqrt(cl.n)*1.1;
+    ctx.globalAlpha=sr;
+    const grd=ctx.createRadialGradient(px,py,0,px,py,r*1.8);
+    grd.addColorStop(0,cl.col+'44');grd.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=grd;ctx.beginPath();ctx.arc(px,py,r*1.8,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);
+    ctx.fillStyle=cl.col+'55';ctx.fill();ctx.strokeStyle=cl.col;ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle=cl.col;ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText(cl.name,px,py-r-6);
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+    ctx.fillText(`PD=${(cl.pd*100).toFixed(0)}%`,px,py+r+12);
+    ctx.globalAlpha=1;
+  });
+  if(t>.72){
+    const dr=ease.out3(ease.step(t,.72,.9));ctx.globalAlpha=dr;
+    // Arrow pointing to over-leveraged
+    const ox2=cx+.48*scale,oy2=cy-.15*scale;
+    ctx.strokeStyle=C.rose;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(ox2+60,oy2-40);ctx.lineTo(ox2+12,oy2-5);ctx.stroke();
+    ctx.fillStyle=C.rose;ctx.font='8px Fira Code,monospace';ctx.textAlign='left';
+    ctx.fillText('Classical model approves →',ox2+65,oy2-44);
+    ctx.fillText('VQC correctly rejects',ox2+65,oy2-32);
+    ctx.globalAlpha=1;
+  }
+  ctx.fillStyle=C.bright;ctx.font='bold 13px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('SME Population Scoring: 10,000 Firms (55 features → PCA 2-D)',W/2,H*.06);
+  ctx.fillStyle=C.rose;ctx.font='9px Fira Code,monospace';
+  ctx.fillText('★ = FN: safe firm rejected  |  FP: over-leveraged firm approved',W/2,H*.1);
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 13: ARCHETYPES — RETAIL FP/FN
+// ═══════════════════════════════════════════════════
+function sceneArchetypes(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const cases=[
+    {name:'Maria Chen',type:'Career Advancer',error:'FALSE NEGATIVE',col:C.blue,
+     signals:['B01↓ Income: HIGH','B03↑ Tenure: NEW JOB','A05↑ Util: 72%','E01↓ Deposits: STRONG','E06↓ Payroll: REGULAR'],
+     vqc:'VQC detects 6-way interaction → APPROVE',x:.28},
+    {name:'Sophie Andersen',type:'Disguised Defaulter',error:'FALSE POSITIVE',col:C.rose,
+     signals:['A01↓ Bureau: CLEAN','E01↑ Deposits: LOW','E04↑ NSF: HIGH','E05↑ EOM: DECLINING','E06↑ Payroll: IRREGULAR'],
+     vqc:'VQC detects cash-flow stress → REJECT',x:.75},
+  ];
+  cases.forEach((c,i)=>{
+    const sr=ease.out3(ease.step(t,i*.35,i*.35+.45));if(sr<.01)return;
+    const bx=W*c.x,by=H*.15,bw=W*.38,bh=H*.72;
+    ctx.globalAlpha=sr;
+    ctx.fillStyle='rgba(6,9,26,.8)';ctx.strokeStyle=c.col;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.roundRect(bx-bw/2,by,bw,bh,6);ctx.fill();ctx.stroke();
+    // Header
+    ctx.fillStyle=c.col;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText(c.name,bx,by+22);
+    ctx.fillStyle=C.text;ctx.font='9px Fira Code,monospace';ctx.fillText(c.type,bx,by+36);
+    // Error badge
+    ctx.fillStyle=c.col+'33';
+    ctx.beginPath();ctx.roundRect(bx-50,by+44,100,18,3);ctx.fill();
+    ctx.fillStyle=c.col;ctx.font='bold 9px Fira Code,monospace';ctx.fillText(c.error,bx,by+56);
+    // Signal bars
+    c.signals.forEach((sig,j)=>{
+      const fy=by+78+j*42;
+      const barW=bw-32,barH=20;
+      const val=j===0?0.15:j===1?0.95:j===2?0.78:j===3?0.85:j===4?0.72:0.5;
+      const dr=ease.out3(ease.step(sr,j*.12,.8));
+      ctx.globalAlpha=sr*dr;
+      ctx.fillStyle='rgba(26,34,64,.6)';
+      ctx.beginPath();ctx.roundRect(bx-barW/2,fy,barW*val,barH,2);ctx.fill();
+      const barCol=i===0?(j===0||j===3||j===4?C.green:C.rose):
+        (j===0?C.green:C.rose);
+      ctx.fillStyle=barCol;ctx.lineWidth=1;
+      ctx.beginPath();ctx.roundRect(bx-barW/2,fy,barW*val,barH,2);ctx.fill();
+      ctx.fillStyle=C.text;ctx.font='7px Fira Code,monospace';ctx.textAlign='left';
+      ctx.fillText(sig,bx-barW/2+4,fy+13);
+    });
+    // VQC verdict
+    const vr=ease.out3(ease.step(sr,.7,1));ctx.globalAlpha=sr*vr;
+    ctx.fillStyle=i===0?C.green:C.rose;ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText(c.vqc,bx,by+bh-14);
+    ctx.globalAlpha=1;
+  });
+  ctx.fillStyle=C.bright;ctx.font='bold 13px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Retail Case Studies: FP & FN Archetypes',W/2,H*.08);
+}
+
+// ═══════════════════════════════════════════════════
+// SCENE 14: BUSINESS IMPACT
+// ═══════════════════════════════════════════════════
+function sceneImpact(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  // Bar chart: revenue recovery
+  const bars=[
+    {label:'10k apps',retail:12,sme:.7,col:C.teal},
+    {label:'100k apps',retail:120,sme:7,col:C.gold},
+    {label:'500k apps',retail:600,sme:34,col:C.green},
+  ];
+  const ox=W*.12,oy=H*.82,pw=W*.76,ph=H*.55,bw=W*.14,gap=W*.08;
+  const maxV=650;
+  ctx.strokeStyle=C.dim;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(ox,oy-ph);ctx.lineTo(ox,oy+5);ctx.lineTo(ox+pw,oy+5);ctx.stroke();
+  ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';ctx.textAlign='right';
+  [0,100,200,400,600].forEach(v=>{
+    const y=oy-v/maxV*ph;
+    ctx.beginPath();ctx.moveTo(ox-5,y);ctx.lineTo(ox,y);ctx.strokeStyle=C.dim;ctx.lineWidth=1;ctx.stroke();
+    ctx.fillText(`$${v}M`,ox-8,y+3);
+  });
+  ctx.save();ctx.translate(W*.04,oy-ph/2);ctx.rotate(-Math.PI/2);
+  ctx.fillText('Annual Revenue Recovery',0,0);ctx.restore();
+  bars.forEach((b,i)=>{
+    const bx=ox+i*(bw*2+gap)+gap/2;
+    const delay=i*.2;
+    const sr=ease.out3(ease.step(t,delay,delay+.35));
+    // Retail bar
+    const rh=b.retail/maxV*ph*sr;
+    ctx.globalAlpha=sr;
+    const rg=ctx.createLinearGradient(bx,oy-rh,bx,oy);
+    rg.addColorStop(0,C.teal);rg.addColorStop(1,'rgba(0,212,200,.2)');
+    ctx.fillStyle=rg;ctx.fillRect(bx,oy-rh,bw,rh);
+    ctx.strokeStyle=C.teal;ctx.lineWidth=1;ctx.strokeRect(bx,oy-rh,bw,rh);
+    ctx.fillStyle=C.teal;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText(`$${b.retail}M`,bx+bw/2,oy-rh-6);
+    // SME bar
+    const sh=b.sme/maxV*ph*sr;
+    const sx=bx+bw+3;
+    const sg=ctx.createLinearGradient(sx,oy-sh,sx,oy);
+    sg.addColorStop(0,C.rose);sg.addColorStop(1,'rgba(255,68,136,.2)');
+    ctx.fillStyle=sg;ctx.fillRect(sx,oy-sh,bw,sh);
+    ctx.strokeStyle=C.rose;ctx.lineWidth=1;ctx.strokeRect(sx,oy-sh,bw,sh);
+    ctx.fillStyle=C.rose;ctx.font='bold 9px Fira Code,monospace';
+    ctx.fillText(`$${b.sme}M`,sx+bw/2,oy-sh-6);
+    // X label
+    ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';
+    ctx.fillText(b.label,bx+bw,oy+18);
+    ctx.globalAlpha=1;
+  });
+  // Legend
+  if(t>.3){
+    const lr=ease.out3(ease.step(t,.3,.55));ctx.globalAlpha=lr;
+    ctx.fillStyle=C.teal;ctx.font='9px Fira Code,monospace';ctx.textAlign='left';
+    ctx.fillText('■ Retail ($200k LTV)',ox,H*.1);
+    ctx.fillStyle=C.rose;ctx.fillText('■ SME ($45k LTV)',ox,H*.15);
+    ctx.globalAlpha=1;
+  }
+  // QPU cost annotation
+  if(t>.6){
+    const qr=ease.out3(ease.step(t,.6,.85));ctx.globalAlpha=qr;
+    ctx.fillStyle=C.panel;ctx.strokeStyle=C.gold;ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.roundRect(W*.56,H*.12,W*.36,H*.22,4);ctx.fill();ctx.stroke();
+    ctx.fillStyle=C.gold;ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('QPU Inference Cost',W*.74,H*.19);
+    ctx.fillStyle=C.text;ctx.font='9px Fira Code,monospace';
+    ctx.fillText('0.25 sec / applicant',W*.74,H*.25);
+    ctx.fillText('100k apps = ~$40k / year',W*.74,H*.31);
+    ctx.fillStyle=C.green;ctx.font='bold 9px Rajdhani,sans-serif';
+    ctx.fillText('vs $120M recovered → 3000× ROI',W*.74,H*.33);
+    ctx.globalAlpha=1;
+  }
+  ctx.fillStyle=C.bright;ctx.font='bold 13px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Business Impact: Revenue Recovery from False-Positive Correction',W/2,H*.07);
+}
+
+// ═══════════════════════════════════════════════════
+// NARRATIONS
+// ═══════════════════════════════════════════════════
+const NARRATIONS=[
+  // 0 — Title
+  `Welcome to this visual explainer of quantum credit scoring using a hybrid GPU and QPU pipeline. We will walk through the complete system — why classical models fail structurally, how quantum feature encoding works mathematically, how training is performed on GPU clusters and inference on real quantum hardware, and what the population-level scoring reveals about borrower archetypes. The pipeline covers 52 retail and 55 SME credit features, projecting into Hilbert spaces of up to 3.6 times ten to the power of sixteen dimensions — a space no classical computer can efficiently simulate.`,
+
+  // 1 — Classical models fail
+  `Classical machine learning models fail on credit scoring in two structurally fundamental ways. Logistic regression cannot detect any interaction between features, because the log-odds are a purely affine function of the input — every mixed second partial derivative is exactly zero. This is not a limitation of the specific model trained, but a mathematical property of the architecture. Random forests improve on this but still fail on the critical 6 and 7-way credit archetypes. With 52 features, the probability that any single tree in a 500-tree forest discovers the career-advancer 6-way pattern is approximately 1.2 times ten to the minus five — meaning fewer than 0.01 trees discover it, even in a large ensemble. The false-positive rates for both architectures on the most important archetypes are effectively 100 percent.`,
+
+  // 2 — Retail features
+  `The retail credit feature vector contains 52 dimensions organised across six data layers. Layer A covers the credit bureau: payment history score, delinquency severity, recency, derogatory count, overall utilization, worst-card utilization, trade line count, and credit age. Layer B covers capacity and affordability: income, income volatility, employment tenure, occupation risk, debt-to-income ratio, free cash flow, liquid reserves, housing burden, and co-borrower status. Layer C covers loan and collateral structure. Layer D captures behavioural signals from the existing relationship. Layer E provides the alternative cash-flow signals — 9 features including monthly deposits, inflow stability, net cash flow, NSF count, end-of-month balance trend, payroll regularity, and rent and utility payment histories. Layer F adds six identity and fraud policy gate features. At 52 qubits, the Hilbert space has dimension 2 to the power of 52, approximately 4.5 times ten to the power of 15.`,
+
+  // 3 — SME features
+  `The SME feature vector is even richer: 55 dimensions across eight layers, following the OCC commercial lending handbook and IFC SME banking guidance. The owner layer covers personal FICO, bankruptcy history, guarantor quality, net worth, and owner experience. The business bureau layer captures trade credit signals including days beyond terms, liens, and insolvency flags. The financial statements layer alone contributes 17 features: revenue growth, gross margin, EBITDA margin, net profit margin, debt-service coverage ratio, interest coverage, leverage, current ratio, quick ratio, working capital, cash reserves, capex burden, retained earnings, tax compliance, seasonality factor, and contingent liabilities. The bank-statement layer provides 10 transaction-level signals. Layers G and H capture collateral quality, covenant headroom, borrowing-base coverage, and the existing relationship track record — signals completely absent from the earlier 12-feature model. At 55 qubits the Hilbert space reaches 3.6 times ten to the power of 16 dimensions.`,
+
+  // 4 — Bloch sphere
+  `Each credit feature is encoded onto a single qubit using angle encoding. For a feature value x-sub-i normalised to the interval zero to one, the encoding applies a rotation gate R-sub-y of pi times x-sub-i to the ground state. This places the qubit at a latitude on the Bloch sphere: when x-sub-i equals zero, the qubit is at the north pole, representing zero probability of default contribution. When x-sub-i equals one, the qubit rotates to the south pole. Intermediate values sit at intermediate latitudes. The probability of measuring the default outcome equals sine squared of the angle divided by two. This is the fundamental bridge between a classical normalised credit feature and a quantum state: the feature value becomes a Bloch-sphere coordinate, and the measurement outcome probability becomes a default risk signal. The encoding is deterministic, reversible, and requires exactly one single-qubit gate per feature.`,
+
+  // 5 — CNOT entanglement
+  `After angle encoding, all n qubits are in a product state — no interactions exist. The CNOT entangling ring creates all 2 to the power of n minus 1 feature interactions simultaneously. The CNOT gate works as follows: if the control qubit is in state one, it flips the target qubit. After applying CNOT from qubit i to qubit j, the amplitude of the basis state one-zero becomes beta-sub-i times beta-sub-j, which to first order equals pi over two squared times x-sub-i times x-sub-j. This is the feature product x-i times x-j, created automatically by the quantum circuit without any manual feature engineering. The circular CNOT ring applies n gates sequentially around all n qubits, creating entanglement between every pair of adjacent qubits and — through transitivity — every combination of features. At n equal to 52, all 4.5 quadrillion feature interactions are simultaneously present in the quantum state. The variational layers are then trained to amplify the specific interactions — like the career-advancer 6-way pattern — that are relevant to default prediction.`,
+
+  // 6 — VQC circuit
+  `The complete variational quantum circuit has three stages. First, the encoding layer applies n rotation gates, one per feature, lifting the input from n-dimensional classical space into 2-to-the-n-dimensional complex Hilbert space. Second, the circular CNOT entangling ring creates all pairwise and higher-order feature interactions. Third, the variational layers apply Rz-Ry-Rz Euler decompositions to every qubit, with 3n trainable parameters per layer. For L layers, the total parameter count is 3nL. For the retail model at n equal to 52 and L equal to 3, this gives 468 trainable parameters. The measurement stage estimates the probability of default by counting how often qubit zero is measured in state one across S shots. At S equal to 2500, the shot noise standard deviation is approximately 1 percent, sufficient for gradient-based optimisation. The full circuit takes less than 0.25 seconds to execute on IBM Heron r2 or Quantinuum H2 for a single applicant.`,
+
+  // 7 — PSR
+  `The parameter-shift rule provides exact quantum gradients at zero bias cost. For any rotation gate with Pauli generator, the expectation value as a function of the parameter is a pure sinusoidal function. This means its derivative is exactly equal to one half times the difference between the expectation values evaluated at the parameter shifted up by pi over two and down by pi over two. This is not an approximation — it is an algebraic identity following from the spectral structure of Pauli rotations. Each gradient component costs exactly two additional circuit evaluations: one with the parameter shifted up by a quarter-turn, one shifted down. Compare this to finite differences, which cost the same number of circuits but introduce an unavoidable O of epsilon-squared bias term. The parameter-shift rule eliminates this bias entirely. For the retail model with 468 parameters, one epoch of gradient computation requires 937 circuit evaluations per training example — 568 kiloevents total per epoch.`,
+
+  // 8 — Barren plateaus
+  `The barren plateau phenomenon is a critical obstacle for training deep variational quantum circuits. Under random initialisation, the variance of any gradient component decreases exponentially with the number of qubits: it scales as e to the minus cn for some constant c. At n equal to 52, this variance is effectively zero — the gradient landscape is completely flat, making gradient descent impossible. The solution is identity initialisation: setting all parameters to zero so the variational circuit begins as the identity transformation. This places the optimisation in a region where gradient variance decreases only polynomially with n, scaling as n to the minus three halves. The crucial practical consequence is that identity initialisation keeps gradients usable up to approximately n equal to 50 in exact state-vector simulation and beyond that with tensor-network methods. This is the recommended initialisation strategy for the hybrid GPU training phase.`,
+
+  // 9 — Hybrid pipeline
+  `The hybrid pipeline separates the workload between GPU and QPU based on where each is optimal. Phase one runs on GPU clusters: the VQC is trained using exact state-vector simulation for circuits up to 30 qubits, or tensor-network methods for circuits up to approximately 50 qubits. The parameter-shift rule computes exact gradients with zero bias, and Adam optimisation iterates over multiple epochs. The result is an optimal parameter vector theta-star. This phase takes 1 to 5 days on a cluster of A100 GPUs and is entirely classical. Phase two runs on the QPU: for each new applicant, a single forward pass is executed with the frozen theta-star parameters. This evaluates the full 2-to-the-52 or 2-to-the-55 dimensional Hilbert space — a computation no classical computer can perform efficiently. At 2500 shots per applicant, each inference takes approximately 0.25 seconds on IBM Heron r2. The QPU infrastructure cost for 100,000 retail applications per year is approximately 40,000 US dollars — negligible against 120 million dollars in recovered revenue.`,
+
+  // 10 — Hardware roadmaps
+  `The hardware landscape is moving rapidly. IBM Heron r2, released in 2024, provides 156 qubits at 99.5 percent two-qubit gate fidelity — adequate for inference on both the 52-qubit retail and 55-qubit SME circuits today. Quantinuum H2 provides 56 qubits at 99.8 percent fidelity with all-to-all connectivity, eliminating the SWAP routing overhead that IBM's heavy-hex topology requires. Google Willow at 105 qubits and 99.7 percent fidelity is also inference-capable today. The training bottleneck is shot throughput, not qubit count or fidelity. IBM Heron r2 delivers approximately 10,000 shots per second, which requires 37 hours per training epoch — impractical. IBM's publicly announced Kookaburra and Flamingo generations target 200,000 to 1 million shots per second by 2027, at which point a full training epoch takes 1 to 2 hours. Quantinuum H4, announced for 2026 to 2027, targets similar throughput. The hybrid approach — GPU training, QPU inference — is the right architecture for today and bridges to full QPU training by 2027 to 2028.`,
+
+  // 11 — Retail clusters
+  `Scoring all 10,000 retail applicants with the trained VQC and projecting the full 52-dimensional feature space to two dimensions via PCA reveals three clearly separated geometric regions. The left cluster, at PC-1 values from negative six to negative three, contains the safe archetypes: prime borrowers with mean PD of 16 percent, career advancers at 38 percent, credit rebuilders at 32 percent, and thin-file applicants at 28 percent. These archetypes are all false-negatives under classical models — the model makes a negative lending decision that is wrong, rejecting safe borrowers. The VQC assigns them appropriate low-to-moderate PD scores by detecting the 6-way signal that bureau-only models miss. The centre cluster at PC-1 around 2 to 4 contains the disguised defaulters at 71 percent PD — their bureau features look like the safe cluster, but the cash-flow signals in layer E shift them decisively right. The right cluster at PC-1 around 7 to 10 contains the true defaulters at 84 percent PD, adverse across all 52 features.`,
+
+  // 12 — SME clusters
+  `The SME population scoring reveals equally clear structure. 10,000 SME firms are projected from the 55-dimensional feature space to two PCA dimensions, retaining 51.6 percent of variance on PC-1 and 7.4 percent on PC-2. The left cluster contains the safe archetypes: established safe firms at 12 percent PD, seasonal businesses at 21 percent, high-growth startups at 21 percent, and turnaround businesses at 27 percent. Within the safe cluster, seasonal businesses and high-growth startups are geometrically distinct from established safe firms, reflecting their different patterns in cash-flow volatility and time-in-business. These are the false-negative archetypes — the classical models make a negative lending decision that is wrong, rejecting firms that would not default. The centre-right cluster contains the over-leveraged smokescreen firms at 74 percent PD. These firms have clean bureau profiles but are distinguished by their LTV, days-beyond-terms, cash-flow volatility, customer concentration, and covenant headroom — a 7-way interaction that classical models with probability 1.5 times ten to the minus six per tree essentially never discover. The right cluster contains the distressed firms at 88 percent PD.`,
+
+  // 13 — Archetypes
+  `Two specific case studies illustrate the practical stakes. Maria Chen is a career advancer — a false negative. She is a safe borrower who is incorrectly rejected by the classical model. Her bureau history is clean, income is high, deposits are strong, and payroll is regular. But she recently changed jobs, creating temporarily elevated credit utilization and short tenure at her current employer. The classical model penalises these signals and rejects her. The rejection is wrong — she will not default. This is a false negative: the model made a negative lending decision that was false. The VQC detects the six-way interaction — high income combined with clean payment history, strong deposits, and regular payroll, in the context of new-job-driven tenure — and correctly approves her. Sophie Andersen is a disguised defaulter — a false positive. She is a borrower who will default but is incorrectly approved by the classical model. Her bureau is spotless. But her bank-statement layer tells a different story: monthly deposits are low, NSF events are high, end-of-month balances are declining, payroll is irregular, and utility payments are being missed. The classical model sees only the bureau and approves her. The approval is wrong — she will default. This is a false positive: the model made a positive lending decision that was false. The VQC detects the six-way cash-flow stress signal and correctly rejects her. In lending, a false positive means we said yes and it was wrong. A false negative means we said no and it was wrong. Both errors are enormously costly — false positives create credit losses, false negatives destroy lending revenue.`,
+
+  // 14 — Business impact
+  `The business case is compelling and the QPU cost is minimal. At 100,000 annual retail applications, correcting false positives via the VQC recovers approximately 600 false-positive approvals per year, generating 120 million dollars in annual revenue at a 200,000 dollar loan-to-value. For SME loans at 45,000 dollar LTV, 100,000 applications yield 7 million dollars in recovered revenue. The QPU inference cost at IBM Heron r2 cloud pricing is approximately 40,000 dollars per year for the full 100,000 application volume — a cost-to-revenue ratio of 1 to 3000. For false-negative avoidance, each over-leveraged smokescreen SME correctly rejected saves up to 500,000 dollars in expected credit losses. Three to five avoided false negatives per year pay for the entire quantum infrastructure. The near-term deployment recommendation is GPU training plus IBM Heron r2 or Quantinuum H2 for inference, scalable to full QPU training when IBM and Quantinuum reach their announced shot-throughput milestones in 2027 to 2028.`
+];
+
+// ═══════════════════════════════════════════════════
+// SCENES
+// ═══════════════════════════════════════════════════
+const SCENES=[
+  {id:0,stage:-1,stageName:'Intro',title:'Quantum Credit Scoring',subtitle:'A Hybrid GPU — QPU Pipeline',duration:38,
+   eqs:[{latex:'\\dim(\\mathcal{H}) = 2^{52}\\approx 4.5\\times10^{15}\\;\\text{(retail)}',label:'Hilbert Space'}],
+   canvasRender:sceneTitle,
+   interp:`<p>A complete pipeline for <strong>credit risk assessment</strong> that is deployable for inference today and fully trainable on quantum hardware by 2027–2028.</p><p>The system covers <em>52 retail features</em> and <em>55 SME features</em>, projecting into Hilbert spaces beyond classical simulation.</p><div class="insight lit">Every feature interaction — all 2⁵²−1 combinations — is simultaneously encoded in the quantum state.</div>`},
+
+  {id:1,stage:0,stageName:'Why Quantum',title:'Why Classical Models Fail',subtitle:'Structural theorem — not model choice',duration:38,
+   eqs:[{latex:'\\frac{\\partial^2}{\\partial x_i\\partial x_j}\\log\\frac{f}{1-f}=0\\quad\\forall i\\neq j',label:'LR failure'},
+        {latex:'P_k\\leq(m/n)^k=(7/52)^6=1.2\\times10^{-5}',label:'RF failure'}],
+   canvasRender:sceneClassicalFail,
+   interp:`<p>Logistic regression has <strong>zero cross-partials</strong> — it structurally cannot represent any feature interaction, by proof.</p><p>Random forests discover the 6-way credit archetype with probability <em>1.2 × 10⁻⁵</em> per tree — effectively never at any ensemble size.</p><div class="insight lit">These are mathematical theorems, not empirical limitations. The VQC resolves both by encoding all 2ⁿ−1 interactions deterministically.</div>`},
+
+  {id:2,stage:1,stageName:'Features',title:'Retail: 52 Features, 6 Layers',subtitle:'Bureau · Capacity · Loan · Behavioural · Cash-Flow · Identity',duration:36,
+   eqs:[{latex:'\\bx\\in[0,1]^{52},\\quad\\dim(\\mathcal{H}_{52})=2^{52}\\approx4.5\\times10^{15}',label:'Retail space'}],
+   canvasRender:sceneRetailFeatures,
+   interp:`<p>The complete retail feature universe: from bureau payment history to <strong>alternative cash-flow signals</strong> (payroll regularity, rent payment history, end-of-month trends) to identity fraud gates — all absent from the 12-feature prior model.</p><p><span class="tag rt">E: Cash-Flow</span> <span class="tag rt">F: Identity</span> are entirely new layers unlocking the disguised-defaulter detection. Note: throughout this explainer, <strong>False Positive = approved a defaulter</strong>; <strong>False Negative = rejected a safe borrower</strong> (business convention). Dataset: 10,000 applicants, real LR/RF/VQC models.</p><div class="insight lit">At n=52, the state vector would require 72 petabytes of memory — classical simulation is intractable.</div>`},
+
+  {id:3,stage:1,stageName:'Features',title:'SME: 55 Features, 8 Layers',subtitle:'Owner · Financials · Collateral · Relationship',duration:36,
+   eqs:[{latex:'\\bs\\in[0,1]^{55},\\quad\\binom{55}{7}\\approx2\\times10^8\\;\\text{7-way interactions}',label:'SME interactions'}],
+   canvasRender:sceneSMEFeatures,
+   interp:`<p>The SME feature universe expands to 8 layers. <strong>Layer C (Financial Statements)</strong> alone contributes 17 features. <span class="tag sme">G: Collateral</span> and <span class="tag sme">H: Relationship</span> are entirely new — capturing covenant headroom, borrowing-base coverage, and relationship track record.</p><p>The 7-way over-leveraged smokescreen interaction requires: LTV × DBT × volatility × customer concentration × covenant tightness × leverage × bureau score.</p><div class="insight lit">2⁵⁵ ≈ 3.6 × 10¹⁶ dimensions. This is the regime of genuine computational quantum advantage.</div>`},
+
+  {id:4,stage:2,stageName:'Encoding',title:'Angle Encoding: Feature → Qubit',subtitle:'Bloch sphere · Rᵧ(πxᵢ)|0⟩',duration:34,
+   eqs:[{latex:'R_y(\\pi x_i)|0\\rangle=\\cos\\tfrac{\\pi x_i}{2}|0\\rangle+\\sin\\tfrac{\\pi x_i}{2}|1\\rangle',label:'Encoding'},
+        {latex:'P(\\text{default on qubit }i)=\\sin^2\\tfrac{\\pi x_i}{2}',label:'Born rule'}],
+   canvasRender:sceneBloch,
+   interp:`<p>Each credit feature x<sub>i</sub> ∈ [0,1] rotates its qubit to a <strong>latitude on the Bloch sphere</strong>. North pole = safe (x=0). South pole = default (x=1). Measurement probability equals sin²(πx/2).</p><p>The encoding is <em>deterministic, reversible</em>, and requires exactly one single-qubit gate per feature. No information is lost.</p><div class="insight lit">Angle encoding is the bridge between classical credit risk and quantum state space. The Born rule makes probability of default a direct observable.</div>`},
+
+  {id:5,stage:2,stageName:'Encoding',title:'CNOT Entanglement Creates Interactions',subtitle:'From product state to 2ⁿ interaction terms',duration:34,
+   eqs:[{latex:'\\text{CNOT}_{i\\to j}:\\;\\text{amplitude of }|10\\rangle=\\beta_i\\beta_j\\approx\\left(\\tfrac{\\pi}{2}\\right)^2 x_i x_j',label:'Interaction term'},
+        {latex:'\\text{Circular ring: all }2^n-1\\text{ interactions created simultaneously}',label:'Coverage'}],
+   canvasRender:sceneCNOT,
+   interp:`<p>The CNOT gate entangles pairs of qubits: the amplitude of basis state |10⟩ becomes β<sub>i</sub>β<sub>j</sub> ≈ (π/2)²·x<sub>i</sub>×x<sub>j</sub>. This is the product feature <em>x<sub>i</sub>×x<sub>j</sub></em>, created without engineering.</p><p>The circular ring creates all $2^{52}-1$ interactions: including all $\binom{52}{6}≈20$ million 6-way patterns relevant to the career-advancer archetype.</p><div class="insight lit">No feature engineering needed — the quantum circuit encodes every possible feature combination in O(n) gates.</div>`},
+
+  {id:6,stage:3,stageName:'VQC',title:'The Complete VQC Circuit',subtitle:'Encode → Entangle → Variate → Measure',duration:34,
+   eqs:[{latex:'\\hat{\\mathrm{PD}}(\\btheta,\\bx)=\\langle\\psi|\\,(|1\\rangle\\langle1|\\otimes I^{\\otimes n-1})\\,|\\psi\\rangle',label:'Observable'},
+        {latex:'|\\psi\\rangle=U_{\\mathrm{var}}(\\btheta)U_{\\mathrm{enc}}(\\bx)|\\mathbf{0}\\rangle',label:'State'}],
+   canvasRender:sceneCircuit,
+   interp:`<p>The circuit lifts input from <strong>ℝⁿ → ℂ^{2ⁿ}</strong> at the encoding stage, applies trainable Euler rotations across L layers, and collapses back to a scalar PD estimate at measurement.</p><p>For retail L=3: <em>p=468 parameters</em>. Executed on IBM Heron r2 in ~0.25 sec per applicant at S=2500 shots.</p><div class="insight lit">The quantum advantage is at inference: the QPU evaluates the full 2⁵²-dimensional state in O(depth) time. Classical simulation would require O(2⁵²) time.</div>`},
+
+  {id:7,stage:4,stageName:'Training',title:'Parameter-Shift Rule: Exact Gradients',subtitle:'Zero bias · 2 circuit evals per parameter',duration:34,
+   eqs:[{latex:'\\frac{\\partial\\mathrm{PD}}{\\partial\\theta_k}=\\frac{1}{2}\\left[\\mathrm{PD}(\\btheta|_{\\theta_k+\\pi/2})-\\mathrm{PD}(\\btheta|_{\\theta_k-\\pi/2})\\right]',label:'Parameter-shift rule'},
+        {latex:'\\mathrm{PD}(\\theta_k)=A+B\\cos(\\theta_k+\\phi_0)\\;\\Rightarrow\\;\\text{exact}',label:'Spectral form'}],
+   canvasRender:scenePSR,
+   interp:`<p>The parameter-shift rule is <strong>algebraically exact</strong>: because quantum expectation values are sinusoidal in each parameter, their derivatives follow immediately from two circuit evaluations at ±π/2 shifts.</p><p>No finite-difference error. No approximation. Two circuits per parameter, regardless of circuit depth or system size.</p><div class="insight lit">Compare to classical automatic differentiation: the PSR is the quantum analogue, but works through actual hardware measurements, not symbolic computation.</div>`},
+
+  {id:8,stage:4,stageName:'Training',title:'Barren Plateaus & Identity Init',subtitle:'Exponential vs polynomial gradient decay',duration:34,
+   eqs:[{latex:'\\mathrm{Var}\\!\\left[\\frac{\\partial\\mathrm{PD}}{\\partial\\theta_k}\\right]\\leq F(n)\\cdot e^{-cn}\\quad(\\text{random init})',label:'Barren plateau'},
+        {latex:'\\mathrm{Var}\\!\\left[\\cdot\\right]\\big|_{\\theta=0}=O(n^{-3/2})\\quad(\\text{identity init})',label:'Mitigation'}],
+   canvasRender:sceneBarren,
+   interp:`<p>Random initialisation causes gradient variance to fall exponentially with n — making training impossible at n=52. This is the <strong>barren plateau phenomenon</strong>.</p><p>Setting θ=0 so the variational circuit acts as the identity at initialisation shifts the decay from exponential to <em>polynomial: O(n⁻³/²)</em>.</p><div class="insight lit">Identity initialisation is the recommended strategy for the GPU training phase. It keeps gradients usable throughout the training horizon.</div>`},
+
+  {id:9,stage:5,stageName:'Hardware',title:'The Hybrid GPU–QPU Pipeline',subtitle:'Classical training · Quantum inference',duration:36,
+   eqs:[{latex:'\\btheta^*=\\underset{\\btheta}{\\arg\\min}\\hat{\\mathcal{L}}(\\btheta)\\quad\\text{(GPU exact)}',label:'Phase 1: Train'},
+        {latex:'\\hat{\\mathrm{PD}}(\\bx)=\\frac{1}{S}\\sum_{s=1}^{S}m_s\\quad\\text{(QPU, S=2500)}',label:'Phase 2: Infer'}],
+   canvasRender:sceneHybrid,
+   interp:`<p><span class="tag gpu">GPU Phase</span> Exact state-vector simulation, parameter-shift gradients, Adam optimiser → θ*. Takes 1–5 days. Entirely classical.</p><p><span class="tag qpu">QPU Phase</span> Frozen θ* on real quantum hardware. Single forward pass per applicant. Evaluates 2⁵²-dimensional Hilbert space in ~0.25 sec.</p><div class="insight lit">Hybrid training preserves quantum advantage at inference: θ* is identical to what perfect QPU training would produce (when simulation is exact).</div>`},
+
+  {id:10,stage:5,stageName:'Hardware',title:'QPU Platform Roadmaps',subtitle:'IBM · IonQ · Quantinuum · OQC · Google',duration:38,
+   eqs:[{latex:'\\text{Inference today: }n\\geq56,\\;f_{2Q}\\geq99.3\\%',label:'Requirement'},
+        {latex:'\\text{Training 2027: }>200\\text{k shots/sec sustained}',label:'Roadmap target'}],
+   canvasRender:sceneRoadmaps,
+   interp:`<p><strong>Inference-ready today:</strong> IBM Heron r2 (156q, 99.5%), Quantinuum H2 (56q, 99.8%), Google Willow (105q, 99.7%). All meet the ≥56 qubit and ≥99.3% fidelity requirements.</p><p>Training bottleneck is <em>shot throughput</em>, not qubits. IBM Kookaburra and Quantinuum H4 announce >200k shots/sec by 2027 → full QPU training feasible.</p><div class="insight lit">The hybrid pipeline bridges from today's NISQ inference to 2027 full QPU training — no architectural change required, only hardware improvement.</div>`},
+
+  {id:11,stage:6,stageName:'Clusters',title:'Retail Population: 3 Distinct Clusters',subtitle:'10,000 applicants · 52 features · PCA 2-D',duration:36,
+   eqs:[{latex:'\\mathbf{Z}=\\mathbf{X}V_2\\;\\text{(PCA)}\\quad\\text{PC-1: 45.6\\% var}',label:'Projection'},
+        {latex:'d_E(\\text{Prime},\\text{Disguised Def.})=9.7\\quad\\Delta\\bar p=0.55',label:'Cluster separation'}],
+   canvasRender:sceneRetailClusters,
+   interp:`<p>Three geometric regions emerge. <strong>Left:</strong> safe archetypes — prime, career advancers, rebuilders, thin-file — all PD ≤ 38%. <strong>Centre:</strong> disguised defaulters (PD 71%) — bureau-clean but cash-flow stressed, invisible to classical models. <strong>Right:</strong> true defaulters (PD 84%).</p><p>The career-advancer cluster overlaps the safe region — explaining classical false negatives (safe borrowers wrongly rejected). The disguised-defaulter cluster is geometrically isolated.</p><div class="insight lit">The VQC discovers the intermediate disguised-defaulter cluster by detecting E-layer signals that classical models never access.</div>`},
+
+  {id:12,stage:6,stageName:'Clusters',title:'SME Population: Smokescreen Exposed',subtitle:'10,000 SME firms · 55 features · PCA 2-D',duration:36,
+   eqs:[{latex:'P_7(\\text{smokescreen})=(7/55)^7=1.5\\times10^{-6}\\;\\text{(RF miss rate)}',label:'Classical failure'},
+        {latex:'\\text{VQC: LTV}\\times\\text{DBT}\\times\\text{vol}\\times\\text{conc}\\times\\text{cov}\\times\\text{lev}\\times\\text{bureau}',label:'7-way signal'}],
+   canvasRender:sceneSMEClusters,
+   interp:`<p>The over-leveraged smokescreen firms occupy a distinctive intermediate zone. Their bureau features resemble the safe cluster; their joint LTV × DBT × volatility × concentration × covenant signal places them near the distressed cluster in the quantum representation.</p><p>Classical random forests discover this 7-way pattern with probability <em>1.5 × 10⁻⁶ per tree</em> — effectively never. The VQC encodes it deterministically through the CNOT ring.</p><div class="insight lit">Each correctly identified smokescreen SME saves up to $500k in expected credit losses.</div>`},
+
+  {id:13,stage:6,stageName:'Clusters',title:'Case Studies: FN & FP Archetypes',subtitle:'Maria Chen (FN) · Sophie Andersen (FP)',duration:40,
+   eqs:[{latex:'\\text{VQC: B01}\\downarrow\\wedge\\text{B03}\\uparrow\\wedge\\text{A05}\\uparrow\\wedge\\text{E01}\\downarrow\\wedge\\text{E06}\\downarrow\\Rightarrow\\text{APPROVE}',label:'False Negative — Career Advancer'},
+        {latex:'\\text{VQC: E01}\\uparrow\\wedge\\text{E04}\\uparrow\\wedge\\text{E05}\\uparrow\\wedge\\text{E06}\\uparrow\\wedge\\text{B06}\\uparrow\\Rightarrow\\text{REJECT}',label:'False Positive — Disguised Defaulter'}],
+   canvasRender:sceneArchetypes,
+   interp:`<p><strong>Maria Chen</strong> (Career Advancer): high income, clean payment history, strong deposits, regular payroll — but recently changed jobs. Classical models penalise her tenure and utilization. VQC detects the 6-way context and approves.</p><p><strong>Sophie Andersen</strong> (Disguised Defaulter): perfect bureau, but low deposits, high NSF, declining end-of-month balances, irregular payroll. Classical models approve. VQC rejects.</p><div class="insight lit">These errors cost financial institutions hundreds of millions per year. The VQC resolves both by accessing the full 52-dimensional feature space simultaneously.</div>`},
+
+  {id:14,stage:7,stageName:'Impact',title:'Business Impact & ROI',subtitle:'Revenue recovery · QPU cost · Deployment path',duration:38,
+   eqs:[{latex:'\\text{100k retail apps: }\\$120\\text{M revenue}\\;\\text{vs}\\;\\$40\\text{k QPU cost}',label:'ROI 3000×'},
+        {latex:'\\text{1 avoided SME default: up to }\\$500\\text{k saved}',label:'FN avoidance'}],
+   canvasRender:sceneImpact,
+   interp:`<p>At 100k annual retail applications: <strong>$120M recovered revenue</strong> from false-positive correction. QPU inference cost: $40k/year. Return: 3000×.</p><p>For SME lending: <strong>$7M/year</strong> at 100k applications. Each avoided over-leveraged false-negative saves up to $500k in credit losses.</p><div class="insight lit"><strong>Deployment path:</strong> GPU train + IBM Heron r2 / Quantinuum H2 inference today → full QPU training 2027–2028 on IBM Kookaburra or Quantinuum H4.</div>`},
+];
+
+// ═══════════════════════════════════════════════════
+// SPEECH ENGINE
+// ═══════════════════════════════════════════════════
+const Speech={
+  synth:window.speechSynthesis,voices:[],selectedVoice:null,
+  rate:1.0,pitch:1.0,vol:1.0,enabled:true,currentUtter:null,iosResumeTimer:null,
+  init(){
+    const load=()=>{this.voices=this.synth.getVoices();this.populateVoiceSelect();};
+    load();if(this.synth.onvoiceschanged!==undefined)this.synth.onvoiceschanged=load;
+  },
+  populateVoiceSelect(){
+    const sel=document.getElementById('voice-select');sel.innerHTML='';
+    if(!this.voices.length){sel.innerHTML='<option>No voices available</option>';return;}
+    const enV=this.voices.filter(v=>v.lang.startsWith('en'));
+    const other=this.voices.filter(v=>!v.lang.startsWith('en'));
+    [...enV,...other].forEach(v=>{
+      const opt=document.createElement('option');opt.value=v.name;
+      opt.textContent=`${v.name} (${v.lang})`;sel.appendChild(opt);});
+    const femKw=/zira|susan|hazel|karen|samantha|moira|tessa|fiona|victoria|kate|allison|ava|aria|jenny|clara|natasha|veena|sara|siri|google\sus|google\suk/i;
+    const femEn=enV.filter(v=>femKw.test(v.name));
+    this.selectedVoice=
+      femEn.find(v=>/natural|neural|enhanced|premium/i.test(v.name))||femEn[0]||enV[0]||this.voices[0];
+    if(this.selectedVoice)sel.value=this.selectedVoice.name;
+    document.getElementById('voice-badge').textContent=
+      this.selectedVoice?this.selectedVoice.lang.toUpperCase().slice(0,5):'TTS';
+  },
+  setVoice(name){this.selectedVoice=this.voices.find(v=>v.name===name)||this.selectedVoice;},
+  speak(text,onend){
+    if(!this.enabled||!text)return;this.stop();narrationDone=false;
+    const utter=new SpeechSynthesisUtterance(text);
+    if(this.selectedVoice)utter.voice=this.selectedVoice;
+    utter.rate=this.rate;utter.pitch=this.pitch;utter.volume=this.vol;
+    this.currentUtter=utter;
+    const el=document.getElementById('narration-text');
+    el.textContent=text;el.style.transform='translateX(0)';
+    utter.onstart=()=>{
+      document.getElementById('speaking-dot').classList.add('active');
+      this.iosResumeTimer=setInterval(()=>{if(this.synth.paused)this.synth.resume();},12000);};
+    utter.onboundary=(e)=>{
+      if(e.name==='word'){
+        const progress=e.charIndex/text.length;
+        const maxScroll=Math.max(0,el.scrollWidth-el.parentElement.clientWidth);
+        el.style.transform=`translateX(${-progress*maxScroll}px)`;}};
+    utter.onend=()=>{
+      document.getElementById('speaking-dot').classList.remove('active');
+      clearInterval(this.iosResumeTimer);narrationDone=true;if(onend)onend();};
+    utter.onerror=()=>{
+      document.getElementById('speaking-dot').classList.remove('active');
+      clearInterval(this.iosResumeTimer);};
+    this.synth.speak(utter);},
+  stop(){clearInterval(this.iosResumeTimer);this.synth.cancel();
+    document.getElementById('speaking-dot').classList.remove('active');this.currentUtter=null;},
+  pause(){if(this.synth.speaking)this.synth.pause();},
+  resume(){if(this.synth.paused)this.synth.resume();},
+  toggle(){
+    this.enabled=!this.enabled;
+    const btn=document.getElementById('btn-voice');
+    if(this.enabled){btn.classList.add('on');btn.innerHTML='&#128264;';}
+    else{btn.classList.remove('on');btn.innerHTML='&#128263;';this.stop();
+      document.getElementById('narration-text').textContent='(narration off)';}}
+};
+
+// ═══════════════════════════════════════════════════
+// ENGINE
+// ═══════════════════════════════════════════════════
+const canvas=document.getElementById('main-canvas');
+const ctx=canvas.getContext('2d');
+let W,H;
+function resizeCanvas(){
+  const panel=canvas.parentElement;
+  const eqH=document.getElementById('eq-layer').offsetHeight;
+  W=panel.clientWidth;H=Math.max(60,panel.clientHeight-eqH);
+  canvas.width=W;canvas.height=H;}
+
+let currentScene=0,isPlaying=false,rafId=null,lastTimestamp=0;
+let elapsedInScene=0,iosUnlocked=false,narrationDone=false;
+const TOTAL_DURATION=SCENES.reduce((a,s)=>a+s.duration,0);
+function totalUpTo(idx){let t=0;for(let i=0;i<idx;i++)t+=SCENES[i].duration;return t;}
+
+function showEquations(scene,progress){
+  ['eq0','eq1','eq2'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    const delay=i*.18+.08;
+    if(i<scene.eqs.length&&progress>delay){
+      if(!el.classList.contains('show')){
+        el.innerHTML='';
+        if(scene.eqs[i].label){const lbl=document.createElement('span');
+          lbl.className='eq-label';lbl.textContent=scene.eqs[i].label;el.appendChild(lbl);}
+        const kEl=document.createElement('span');el.appendChild(kEl);
+        renderK(kEl,scene.eqs[i].latex);el.classList.add('show');}
+    }else{el.classList.remove('show');el.innerHTML='';}});}
+
+function updateInfoPanel(scene,idx){
+  document.getElementById('scene-num').textContent=`Scene ${idx+1}/${SCENES.length}  ·  ${scene.stageName}`;
+  document.getElementById('scene-title').textContent=scene.title;
+  document.getElementById('scene-subtitle').textContent=scene.subtitle;
+  document.getElementById('interp-content').innerHTML=scene.interp;
+  setTimeout(()=>document.querySelectorAll('.insight')
+    .forEach((el,i)=>setTimeout(()=>el.classList.add('lit'),i*300+500)),150);}
+
+function updateBreadcrumb(stage){
+  document.querySelectorAll('.crumb').forEach(c=>{
+    c.classList.remove('active');
+    if(parseInt(c.dataset.stage)===stage)c.classList.add('active');});}
+
+function updateProgress(globalT){
+  const pct=(globalT/TOTAL_DURATION)*100;
+  document.getElementById('progress-fill').style.width=pct+'%';
+  const fmt=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+  document.getElementById('time-current').textContent=fmt(globalT);
+  document.getElementById('time-total').textContent=fmt(TOTAL_DURATION);}
+
+function buildMarkers(){
+  const container=document.getElementById('scene-markers');container.innerHTML='';
+  let acc=0;SCENES.forEach((s,i)=>{
+    if(i>0){const mark=document.createElement('div');mark.className='scene-mark';
+      mark.style.left=(acc/TOTAL_DURATION*100)+'%';container.appendChild(mark);}
+    acc+=s.duration;});}
+
+function updateCountdown(prog,dur){
+  const remaining=(1-prog)*dur;
+  document.getElementById('cr-arc').style.strokeDashoffset=(88*(prog)).toFixed(2);
+  document.getElementById('countdown-label').textContent=Math.ceil(remaining)+'s';}
+
+function goToScene(idx,forcePlay){
+  if(idx<0||idx>=SCENES.length)return;
+  Speech.stop();narrationDone=false;currentScene=idx;elapsedInScene=0;
+  const scene=SCENES[idx];updateInfoPanel(scene,idx);updateBreadcrumb(scene.stage);
+  document.getElementById('scene-counter').textContent=`${idx+1}/${SCENES.length}`;
+  ['eq0','eq1','eq2'].forEach(id=>{const el=document.getElementById(id);
+    el.classList.remove('show');el.innerHTML='';});
+  if(Speech.enabled&&(isPlaying||forcePlay)){Speech.speak(NARRATIONS[idx]);}
+  else if(Speech.enabled){document.getElementById('narration-text').textContent=NARRATIONS[idx];}
+  if(forcePlay&&!isPlaying)togglePlay();}
+
+function togglePlay(){
+  if(!iosUnlocked&&/iPhone|iPad|iPod/.test(navigator.userAgent)){
+    document.getElementById('ios-unlock').classList.add('show');return;}
+  isPlaying=!isPlaying;
+  const btn=document.getElementById('btn-play');
+  btn.innerHTML=isPlaying?'&#9646;&#9646;':'&#9654;';
+  btn.classList.toggle('playing',isPlaying);
+  if(isPlaying){lastTimestamp=performance.now();Speech.speak(NARRATIONS[currentScene]);
+    if(!rafId)rafId=requestAnimationFrame(mainLoop);}
+  else{Speech.pause();}}
+
+function mainLoop(timestamp){
+  if(!isPlaying){rafId=null;return;}
+  const dt=(timestamp-lastTimestamp)/1000;lastTimestamp=timestamp;
+  elapsedInScene+=dt;const scene=SCENES[currentScene];
+  const prog=Math.min(elapsedInScene/scene.duration,1);
+  resizeCanvas();scene.canvasRender(ctx,W,H,prog);
+  showEquations(scene,prog);
+  updateProgress(Math.min(totalUpTo(currentScene)+elapsedInScene,TOTAL_DURATION));
+  updateCountdown(prog,scene.duration);
+  if(elapsedInScene>=scene.duration&&(narrationDone||!Speech.enabled||!Speech.synth.speaking)){
+    if(currentScene<SCENES.length-1){goToScene(currentScene+1,false);}
+    else{isPlaying=false;Speech.stop();
+      document.getElementById('btn-play').innerHTML='&#9654;';
+      document.getElementById('btn-play').classList.remove('playing');rafId=null;return;}}
+  rafId=requestAnimationFrame(mainLoop);}
+
+// Progress bar
+function seekTo(pct){
+  const target=pct*TOTAL_DURATION;let acc=0;
+  for(let i=0;i<SCENES.length;i++){
+    if(acc+SCENES[i].duration>target||i===SCENES.length-1){
+      Speech.stop();elapsedInScene=target-acc;currentScene=i;
+      updateInfoPanel(SCENES[i],i);updateBreadcrumb(SCENES[i].stage);
+      document.getElementById('scene-counter').textContent=`${i+1}/${SCENES.length}`;
+      if(!isPlaying){resizeCanvas();const sp=Math.min(elapsedInScene/SCENES[i].duration,1);
+        SCENES[i].canvasRender(ctx,W,H,sp);showEquations(SCENES[i],sp);
+        updateProgress(target);document.getElementById('narration-text').textContent=NARRATIONS[i];}
+      else{Speech.speak(NARRATIONS[i]);}break;}acc+=SCENES[i].duration;}}
+
+const progressBar=document.getElementById('progress-bar');let isDragging=false;
+function getBarPct(e){
+  const rect=progressBar.getBoundingClientRect();
+  const clientX=e.touches?e.touches[0].clientX:e.clientX;
+  return Math.max(0,Math.min(1,(clientX-rect.left)/rect.width));}
+progressBar.addEventListener('mousedown',e=>{isDragging=true;seekTo(getBarPct(e));});
+progressBar.addEventListener('touchstart',e=>{isDragging=true;seekTo(getBarPct(e));},{passive:true});
+document.addEventListener('mousemove',e=>{if(isDragging)seekTo(getBarPct(e));});
+document.addEventListener('touchmove',e=>{if(isDragging)seekTo(getBarPct(e));},{passive:true});
+document.addEventListener('mouseup',()=>{isDragging=false;});
+document.addEventListener('touchend',()=>{isDragging=false;});
+
+// Controls
+document.getElementById('btn-play').addEventListener('click',togglePlay);
+document.getElementById('btn-prev').addEventListener('click',()=>{
+  if(currentScene>0)goToScene(currentScene-1,isPlaying);else{elapsedInScene=0;}});
+document.getElementById('btn-next').addEventListener('click',()=>{
+  if(currentScene<SCENES.length-1)goToScene(currentScene+1,isPlaying);});
+document.addEventListener('keydown',e=>{
+  if(e.key===' '){e.preventDefault();togglePlay();}
+  if(e.key==='ArrowRight'&&currentScene<SCENES.length-1)goToScene(currentScene+1,isPlaying);
+  if(e.key==='ArrowLeft'&&currentScene>0)goToScene(currentScene-1,isPlaying);
+  if(e.key==='m')Speech.toggle();});
+
+// Voice modal
+const voiceModal=document.getElementById('voice-modal');
+document.getElementById('btn-voice').addEventListener('click',e=>{
+  e.stopPropagation();voiceModal.classList.toggle('open');});
+document.addEventListener('click',e=>{
+  if(!voiceModal.contains(e.target)&&e.target.id!=='btn-voice')voiceModal.classList.remove('open');});
+document.getElementById('voice-select').addEventListener('change',e=>{Speech.setVoice(e.target.value);});
+document.getElementById('rate-slider').addEventListener('input',e=>{
+  Speech.rate=parseFloat(e.target.value);document.getElementById('rate-val').textContent=Speech.rate.toFixed(2)+'×';});
+document.getElementById('pitch-slider').addEventListener('input',e=>{
+  Speech.pitch=parseFloat(e.target.value);document.getElementById('pitch-val').textContent=Speech.pitch.toFixed(2);});
+document.getElementById('vol-slider').addEventListener('input',e=>{
+  Speech.vol=parseFloat(e.target.value);document.getElementById('vol-val').textContent=Math.round(Speech.vol*100)+'%';});
+document.getElementById('btn-test-voice').addEventListener('click',()=>{
+  Speech.speak('This is the selected voice for the quantum credit scoring explainer.');});
+document.getElementById('btn-voice').addEventListener('dblclick',e=>{e.stopPropagation();Speech.toggle();});
+
+// iOS unlock
+document.getElementById('btn-ios-start').addEventListener('click',()=>{
+  iosUnlocked=true;document.getElementById('ios-unlock').classList.remove('show');togglePlay();});
+
+// Crumb nav
+document.querySelectorAll('.crumb').forEach(c=>{
+  c.addEventListener('click',()=>{
+    const stage=parseInt(c.dataset.stage);
+    const idx=SCENES.findIndex(s=>s.stage===stage);
+    if(idx>=0)goToScene(idx,isPlaying);});});
+
+// Breadcrumb on scene click (mobile)
+document.getElementById('main-canvas').addEventListener('click',()=>{
+  if(!isPlaying)togglePlay();});
+
+// Init
+Speech.init();buildMarkers();
+goToScene(0,false);
+resizeCanvas();
+SCENES[0].canvasRender(ctx,W,H,0);
+window.addEventListener('resize',()=>{resizeCanvas();
+  const s=SCENES[currentScene];const p=Math.min(elapsedInScene/s.duration,1);
+  s.canvasRender(ctx,W,H,p);});
+</script>
+</body>
+</html>

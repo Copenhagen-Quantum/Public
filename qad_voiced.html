@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Quantum Anomaly Detection — Voiced Explainer</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<style>
+/* ── ROOT VARIABLES ─────────────────────────────── */
+:root{
+  --bg:#03050f;--panel:#06091a;--border:#1a2240;
+  --teal:#00d4c8;--gold:#f5a820;--purple:#8855ff;
+  --rose:#ff4488;--text:#c0cfe0;--dim:#3a4a60;
+  --bright:#e8f0ff;--green:#22cc88;--orange:#ff7733;--blue:#3399ff;
+  --hdr:44px;--eq:90px;--ctrl:52px;--nbar:38px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
+  font-family:'Rajdhani',sans-serif;touch-action:manipulation;}
+#app{display:flex;flex-direction:column;height:100vh;
+  background:radial-gradient(ellipse at 20% 50%,#060a1e 0%,#03050f 60%);}
+#stage-header{display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,.35);flex-shrink:0;height:var(--hdr);min-height:var(--hdr);}
+#stage-crumbs{display:flex;align-items:center;gap:5px;overflow-x:auto;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+#stage-crumbs::-webkit-scrollbar{display:none;}
+.crumb{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;
+  padding:3px 8px;border-radius:3px;opacity:.35;transition:opacity .4s,background .4s;
+  color:var(--teal);border:1px solid var(--teal);white-space:nowrap;flex-shrink:0;}
+.crumb.active{opacity:1;background:rgba(0,212,200,.12);}
+#paper-label{font-size:9px;letter-spacing:1.5px;color:var(--dim);
+  text-transform:uppercase;white-space:nowrap;flex-shrink:0;margin-left:8px;}
+#main-layout{display:flex;flex:1;overflow:hidden;min-height:0;}
+#canvas-panel{flex:0 0 62%;display:flex;flex-direction:column;
+  border-right:1px solid var(--border);min-width:0;}
+@media(max-width:700px){#canvas-panel{flex:0 0 100%;border-right:none;}}
+#main-canvas{width:100%;flex:1;display:block;min-height:0;}
+#eq-layer{padding:8px 14px;background:rgba(0,0,0,.45);
+  border-top:1px solid var(--border);
+  height:var(--eq);min-height:var(--eq);max-height:var(--eq);
+  display:flex;flex-direction:column;gap:4px;justify-content:center;overflow:hidden;}
+.eq-row{opacity:0;transform:translateY(5px);transition:opacity .5s,transform .5s;
+  display:flex;align-items:center;gap:10px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;}
+.eq-row.show{opacity:1;transform:translateY(0);}
+.eq-label{font-size:9px;letter-spacing:1.2px;color:var(--dim);
+  text-transform:uppercase;white-space:nowrap;font-family:'Fira Code',monospace;flex-shrink:0;}
+.eq-row .katex{color:var(--bright)!important;font-size:.88em;}
+#info-panel{flex:1;display:flex;flex-direction:column;
+  padding:16px 16px 10px;overflow-y:auto;min-width:0;-webkit-overflow-scrolling:touch;}
+@media(max-width:700px){#info-panel{display:none;}}
+#scene-num{font-size:9px;letter-spacing:1.8px;color:var(--teal);
+  text-transform:uppercase;margin-bottom:6px;font-family:'Fira Code',monospace;}
+#scene-title{font-size:19px;font-weight:700;color:var(--bright);line-height:1.2;margin-bottom:3px;}
+#scene-subtitle{font-size:11px;color:var(--gold);font-weight:600;
+  letter-spacing:1.2px;text-transform:uppercase;margin-bottom:12px;font-family:'Fira Code',monospace;}
+#interp-content{font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);line-height:1.7;}
+#interp-content p{margin-bottom:9px;}
+#interp-content strong{color:var(--gold);font-weight:600;}
+#interp-content em{color:var(--teal);font-style:italic;}
+.insight{border-left:2px solid var(--teal);padding-left:10px;
+  margin:8px 0;font-size:13px;color:var(--dim);transition:color .4s;}
+.insight.lit{color:var(--text);}
+.tag{display:inline-block;font-family:'Fira Code',monospace;font-size:9px;
+  padding:2px 6px;border-radius:2px;letter-spacing:1px;text-transform:uppercase;margin:1px;}
+.tag.zz{background:rgba(0,212,200,.15);color:var(--teal);border:1px solid rgba(0,212,200,.35);}
+.tag.qae{background:rgba(136,85,255,.2);color:var(--purple);border:1px solid rgba(136,85,255,.4);}
+.tag.qaoa{background:rgba(245,168,32,.15);color:var(--gold);border:1px solid rgba(245,168,32,.35);}
+.tag.sup{background:rgba(34,204,136,.15);color:var(--green);border:1px solid rgba(34,204,136,.35);}
+.tag.unsup{background:rgba(255,68,136,.15);color:var(--rose);border:1px solid rgba(255,68,136,.35);}
+#narration-bar{height:var(--nbar);min-height:var(--nbar);flex-shrink:0;
+  background:rgba(0,0,0,.5);border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;padding:0 12px;overflow:hidden;}
+#narration-scroll{flex:1;overflow:hidden;position:relative;height:22px;}
+#narration-text{font-family:'Crimson Pro',serif;font-size:13px;color:var(--text);
+  white-space:nowrap;position:absolute;left:0;top:0;transition:none;}
+#voice-badge{font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--dim);font-family:'Fira Code',monospace;white-space:nowrap;flex-shrink:0;}
+#speaking-dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:background .2s;}
+#speaking-dot.active{background:var(--teal);animation:pulse-dot 1s infinite;}
+@keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.4;}}
+#controls{display:flex;align-items:center;gap:8px;padding:0 12px;
+  border-top:1px solid var(--border);background:rgba(0,0,0,.55);flex-shrink:0;
+  height:var(--ctrl);min-height:var(--ctrl);}
+.ctrl-btn{background:none;border:1px solid var(--border);color:var(--text);
+  width:32px;height:32px;border-radius:4px;cursor:pointer;
+  font-size:12px;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;flex-shrink:0;-webkit-appearance:none;}
+.ctrl-btn:hover,.ctrl-btn:active{border-color:var(--teal);color:var(--teal);}
+#btn-play{width:38px;height:38px;border-color:var(--teal);color:var(--teal);font-size:14px;}
+#btn-play.playing{background:rgba(0,212,200,.1);}
+#btn-voice.on{border-color:var(--teal);color:var(--teal);background:rgba(0,212,200,.08);}
+#progress-wrap{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;}
+#progress-bar{width:100%;height:5px;background:var(--dim);border-radius:3px;cursor:pointer;position:relative;touch-action:none;}
+#progress-fill{height:100%;background:var(--teal);border-radius:3px;width:0%;pointer-events:none;transition:width .1s linear;}
+#scene-markers{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+.scene-mark{position:absolute;top:-1px;width:2px;height:7px;background:var(--purple);border-radius:1px;transform:translateX(-50%);}
+#time-info{display:flex;justify-content:space-between;font-size:9px;color:var(--dim);font-family:'Fira Code',monospace;}
+#countdown-ring{position:relative;width:32px;height:32px;flex-shrink:0;}
+#countdown-ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg);}
+.cr-bg{fill:none;stroke:var(--border);stroke-width:2;}
+.cr-fill{fill:none;stroke:var(--teal);stroke-width:2;stroke-linecap:round;
+  stroke-dasharray:88;stroke-dashoffset:88;transition:stroke-dashoffset .1s linear;}
+#countdown-label{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;font-size:8px;color:var(--teal);font-family:'Fira Code',monospace;}
+#scene-counter{font-size:10px;color:var(--dim);font-family:'Fira Code',monospace;white-space:nowrap;flex-shrink:0;}
+#voice-modal{display:none;position:fixed;bottom:calc(var(--ctrl) + var(--nbar) + 8px);
+  left:12px;width:260px;background:var(--panel);border:1px solid var(--border);
+  border-radius:8px;padding:14px;z-index:100;box-shadow:0 8px 32px rgba(0,0,0,.7);}
+#voice-modal.open{display:block;}
+.vm-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);font-family:'Fira Code',monospace;margin-bottom:6px;}
+#voice-select{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);
+  color:var(--text);font-family:'Rajdhani',sans-serif;font-size:12px;
+  padding:5px 8px;border-radius:4px;margin-bottom:12px;-webkit-appearance:none;}
+.vm-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.vm-row label{font-size:11px;color:var(--text);width:54px;flex-shrink:0;}
+.vm-row input[type=range]{flex:1;accent-color:var(--teal);height:4px;}
+.vm-row span{font-size:10px;color:var(--teal);font-family:'Fira Code',monospace;width:32px;text-align:right;}
+#btn-test-voice{width:100%;padding:7px;background:rgba(0,212,200,.1);
+  border:1px solid var(--teal);color:var(--teal);border-radius:4px;
+  font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;text-transform:uppercase;}
+#ios-unlock{display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(3,5,15,.92);flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+#ios-unlock.show{display:flex;}
+#ios-unlock p{color:var(--text);font-family:'Crimson Pro',serif;font-size:17px;text-align:center;max-width:280px;}
+#btn-ios-start{padding:14px 32px;background:rgba(0,212,200,.15);border:2px solid var(--teal);
+  color:var(--teal);border-radius:8px;font-family:'Rajdhani',sans-serif;
+  font-size:16px;font-weight:600;letter-spacing:2px;cursor:pointer;text-transform:uppercase;}
+@media(max-width:700px){
+  :root{--eq:72px;--ctrl:46px;--nbar:32px;}
+  .crumb{font-size:9px;padding:2px 6px;}
+  #paper-label{display:none;}
+  #narration-text{font-size:12px;}
+  #scene-counter{display:none;}
+  #countdown-ring{display:none;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage-header">
+    <div id="stage-crumbs">
+      <div class="crumb" data-stage="0">Intro</div>
+      <div class="crumb" data-stage="1">Data</div>
+      <div class="crumb" data-stage="2">ZZ Kernel</div>
+      <div class="crumb" data-stage="3">Scoring</div>
+      <div class="crumb" data-stage="4">QAE</div>
+      <div class="crumb" data-stage="5">QAOA</div>
+      <div class="crumb" data-stage="6">Research</div>
+    </div>
+    <div id="paper-label">QAD Article · Draft</div>
+  </div>
+  <div id="main-layout">
+    <div id="canvas-panel">
+      <canvas id="main-canvas"></canvas>
+      <div id="eq-layer">
+        <div class="eq-row" id="eq0"></div>
+        <div class="eq-row" id="eq1"></div>
+        <div class="eq-row" id="eq2"></div>
+      </div>
+    </div>
+    <div id="info-panel">
+      <div id="scene-num"></div>
+      <h2 id="scene-title"></h2>
+      <div id="scene-subtitle"></div>
+      <div id="interp-content"></div>
+    </div>
+  </div>
+  <div id="narration-bar">
+    <div id="speaking-dot"></div>
+    <div id="narration-scroll"><div id="narration-text">Press ▶ to begin the narrated explainer</div></div>
+    <div id="voice-badge">TTS</div>
+  </div>
+  <div id="controls">
+    <button class="ctrl-btn" id="btn-prev">&#9664;</button>
+    <button class="ctrl-btn" id="btn-play">&#9654;</button>
+    <button class="ctrl-btn" id="btn-next">&#9654;&#9654;</button>
+    <div id="progress-wrap">
+      <div id="progress-bar">
+        <div id="progress-fill"></div>
+        <div id="scene-markers"></div>
+      </div>
+      <div id="time-info">
+        <span id="time-current">0:00</span>
+        <span id="time-total">0:00</span>
+      </div>
+    </div>
+    <div id="countdown-ring">
+      <svg width="32" height="32" viewBox="0 0 32 32">
+        <circle class="cr-bg" cx="16" cy="16" r="14"/>
+        <circle class="cr-fill" id="cr-arc" cx="16" cy="16" r="14"/>
+      </svg>
+      <div id="countdown-label">—</div>
+    </div>
+    <button class="ctrl-btn on" id="btn-voice">&#128264;</button>
+    <div id="scene-counter">1/19</div>
+  </div>
+</div>
+
+<div id="voice-modal">
+  <div class="vm-label">Voice</div>
+  <select id="voice-select"><option>Loading voices…</option></select>
+  <div class="vm-row"><label>Speed</label><input type="range" id="rate-slider" min="0.6" max="1.6" step="0.05" value="1.0"><span id="rate-val">1.0×</span></div>
+  <div class="vm-row"><label>Pitch</label><input type="range" id="pitch-slider" min="0.6" max="1.4" step="0.05" value="1.0"><span id="pitch-val">1.0</span></div>
+  <div class="vm-row"><label>Volume</label><input type="range" id="vol-slider" min="0" max="1" step="0.05" value="1.0"><span id="vol-val">100%</span></div>
+  <button id="btn-test-voice">▶ Test voice</button>
+</div>
+<div id="ios-unlock">
+  <p>Tap to unlock audio narration<br><span style="font-size:13px;color:var(--dim)">(iOS requires a tap before speech can begin)</span></p>
+  <button id="btn-ios-start">Tap to Start &#128264;</button>
+</div>
+
+<script>
+function renderK(el,latex){if(!el)return;try{katex.render(latex,el,{displayMode:false,throwOnError:false});}catch(e){el.textContent=latex;}}
+
+const C={bg:'#03050f',panel:'#06091a',border:'#1a2240',teal:'#00d4c8',gold:'#f5a820',purple:'#8855ff',rose:'#ff4488',text:'#c0cfe0',dim:'#3a4a60',bright:'#e8f0ff',green:'#22cc88',orange:'#ff7733',blue:'#3399ff'};
+const ease={out3:t=>1-Math.pow(1-t,3),inOut:t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,step:(t,s,e)=>Math.max(0,Math.min(1,(t-s)/(e-s))),clamp:(v,lo=0,hi=1)=>Math.max(lo,Math.min(hi,v))};
+const seed=(i,j=0)=>{let s=(i*2654435761+j*1234567)>>>0;return((s^(s>>16))>>>0)/4294967296;};
+function drawGrid(ctx,W,H){ctx.strokeStyle='rgba(26,34,64,.4)';ctx.lineWidth=.5;for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}}
+
+// ── SCENE 0: Title ──────────────────────────────────────────
+function canvasTitle(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  const N=60;
+  for(let i=0;i<N;i++){
+    const bx=seed(i*3)*W,by=seed(i*3+1)*H,ph=seed(i*3+2)*Math.PI*2;
+    const sp=.25+seed(i*7)*.45;
+    const x=bx+Math.sin(t*sp*Math.PI*2+ph)*20,y=by+Math.cos(t*sp*1.3*Math.PI*2+ph*1.5)*16;
+    const r=1.2+seed(i*11)*2.8,a=.15+seed(i*13)*.55;
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(0,212,200,${a*ease.clamp(t*3)})`;ctx.fill();
+    for(let j=i+1;j<N;j++){
+      const bx2=seed(j*3)*W,by2=seed(j*3+1)*H,ph2=seed(j*3+2)*Math.PI*2,sp2=.25+seed(j*7)*.45;
+      const x2=bx2+Math.sin(t*sp2*Math.PI*2+ph2)*20,y2=by2+Math.cos(t*sp2*1.3*Math.PI*2+ph2*1.5)*16;
+      const d=Math.hypot(x2-x,y2-y);
+      if(d<85){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.strokeStyle=`rgba(0,212,200,${(1-d/85)*.1*ease.clamp(t*3)})`;ctx.lineWidth=.5;ctx.stroke();}
+    }
+  }
+  const cx=W/2,cy=H*.42,pulse=.5+.5*Math.sin(t*Math.PI*2.5);
+  [80,55,30].forEach(r=>{ctx.beginPath();ctx.arc(cx,cy,r+pulse*6,0,Math.PI*2);ctx.strokeStyle=`rgba(0,212,200,${.05*ease.clamp(t*2)})`;ctx.lineWidth=1;ctx.stroke();});
+  ctx.beginPath();ctx.arc(cx,cy,10+pulse*3,0,Math.PI*2);
+  const grd=ctx.createRadialGradient(cx,cy,0,cx,cy,14+pulse*3);
+  grd.addColorStop(0,'rgba(0,212,200,.9)');grd.addColorStop(1,'rgba(0,212,200,0)');
+  ctx.fillStyle=grd;ctx.fill();
+  const a=ease.clamp(ease.out3(ease.step(t,0,.25)));
+  ctx.globalAlpha=a;
+  ctx.fillStyle=C.bright;ctx.font='bold 22px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Quantum Anomaly Detection',cx,cy+38);
+  ctx.fillStyle=C.teal;ctx.font='600 11px Fira Code,monospace';ctx.letterSpacing='2px';
+  ctx.fillText('ZZ KERNEL  ·  QUANTUM AUTOENCODER  ·  QAOA',cx,cy+58);
+  ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';
+  ctx.fillText('100,000 transactions → B confirmed anomalies — fully unsupervised',cx,cy+78);
+  ctx.globalAlpha=1;
+}
+
+// ── SCENE 1: Pipeline Overview ───────────────────────────────
+function canvasPipeline(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const stages=[
+    {label:'Transaction\nData',sub:'N=100K',color:C.blue},
+    {label:'ZZ Kernel\nScoring',sub:'Eq.(4)',color:C.teal},
+    {label:'Pre-Screen\nTop-50',sub:'99.95th pct',color:C.gold},
+    {label:'Quantum\nAutoencoder',sub:'PCA · k=3',color:C.purple},
+    {label:'Score\nFusion',sub:'0.55·S_K+0.45·S_A',color:C.orange},
+    {label:'QAOA\nSelection',sub:'Ising · p=3',color:C.rose},
+    {label:'Anomaly\nReport',sub:'B flags',color:C.green},
+  ];
+  const N=stages.length,bw=60,bh=46,gap=9,totalW=N*(bw+gap)-gap;
+  const sx=(W-totalW)/2,sy=H/2-bh/2;
+  stages.forEach((s,i)=>{
+    const d=i/N,a=ease.clamp(ease.out3(ease.step(t,d,d+.2)));
+    const x=sx+i*(bw+gap);
+    if(i>0){
+      const ax=x-gap,ay=sy+bh/2;
+      ctx.beginPath();ctx.moveTo(ax-gap,ay);ctx.lineTo(ax,ay);
+      ctx.strokeStyle=`rgba(60,80,120,${a})`;ctx.lineWidth=1.5;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ax,ay-4);ctx.lineTo(ax+5,ay);ctx.lineTo(ax,ay+4);
+      ctx.fillStyle=`rgba(60,80,120,${a})`;ctx.fill();
+    }
+    ctx.globalAlpha=a;
+    ctx.fillStyle=C.panel;ctx.fillRect(x,sy,bw,bh);
+    ctx.strokeStyle=s.color;ctx.lineWidth=1.5;ctx.strokeRect(x,sy,bw,bh);
+    ctx.fillStyle=s.color;ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';
+    const lines=s.label.split('\n');
+    lines.forEach((l,li)=>ctx.fillText(l,x+bw/2,sy+bh/2-3+(li-lines.length/2+.5)*12));
+    ctx.fillStyle='rgba(192,207,224,.55)';ctx.font='7px Fira Code,monospace';
+    ctx.fillText(s.sub,x+bw/2,sy+bh-5);ctx.globalAlpha=1;
+  });
+  const ta=ease.clamp(ease.out3(ease.step(t,0,.15)));
+  ctx.globalAlpha=ta;ctx.fillStyle=C.bright;ctx.font='bold 14px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Seven-Stage QAD Pipeline',W/2,sy-24);
+  ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';
+  ctx.fillText('Fully unsupervised · no fraud labels at any stage',W/2,sy-10);ctx.globalAlpha=1;
+  // funnel annotation at bottom
+  if(t>.7){
+    const fa=ease.out3(ease.step(t,.7,.95));ctx.globalAlpha=fa;
+    const labels=['100,000','100,000','50','50','14','B','B'];
+    stages.forEach((s,i)=>{
+      const x=sx+i*(bw+gap);
+      ctx.fillStyle=s.color;ctx.font='bold 8px Fira Code,monospace';ctx.textAlign='center';
+      ctx.fillText(labels[i],x+bw/2,sy+bh+14);
+    });
+    ctx.globalAlpha=1;
+  }
+}
+
+// ── SCENE 2: Synthetic Data – Normal Population ──────────────
+function canvasData(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const segs=[
+    {label:'Retail',pi:.33,col:C.teal,cx:W*.18,cy:H*.38},
+    {label:'E-comm',pi:.22,col:C.gold,cx:W*.35,cy:H*.28},
+    {label:'High-val',pi:.17,col:C.purple,cx:W*.55,cy:H*.35},
+    {label:'Freq-low',pi:.17,col:C.orange,cx:W*.38,cy:H*.58},
+    {label:'Inactive',pi:.11,col:C.blue,cx:W*.22,cy:H*.62},
+  ];
+  const r0=ease.out3(ease.step(t,0,.3));
+  segs.forEach((s,i)=>{
+    const delay=i*.1,ar=ease.out3(ease.step(t,delay,delay+.22));if(ar<.01)return;
+    const R=s.pi*W*.32,dotN=Math.floor(s.pi*120);
+    for(let k=0;k<dotN*ar;k++){
+      const ang=seed(i*100+k)*Math.PI*2,dr=seed(i*100+k+50)*R*.9;
+      const ox=s.cx+Math.cos(ang)*dr,oy=s.cy+Math.sin(ang)*dr;
+      ctx.beginPath();ctx.arc(ox,oy,1.5,0,Math.PI*2);
+      ctx.fillStyle=s.col+'99';ctx.fill();
+    }
+    ctx.beginPath();ctx.arc(s.cx,s.cy,8,0,Math.PI*2);
+    ctx.fillStyle=s.col;ctx.fill();
+    ctx.fillStyle=s.col;ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText(s.label,s.cx,s.cy-12);ctx.fillText((s.pi*100).toFixed(0)+'%',s.cx,s.cy+22);
+  });
+  // fraud injection flash
+  if(t>.55){
+    const fi=ease.out3(ease.step(t,.55,.85));
+    const fraudPts=[{x:W*.47,y:H*.22},{x:W*.67,y:H*.4},{x:W*.3,y:H*.75},{x:W*.7,y:H*.68},{x:W*.58,y:H*.55},{x:W*.15,y:H*.5}];
+    fraudPts.forEach((fp,i)=>{
+      const da=ease.out3(ease.step(fi,i/6,(i+1)/6));if(da<.01)return;
+      const pulse=.5+.5*Math.sin(t*Math.PI*8+i);
+      ctx.beginPath();ctx.arc(fp.x,fp.y,7+pulse*4,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,68,136,${.18*pulse})`;ctx.fill();
+      ctx.beginPath();ctx.arc(fp.x,fp.y,5,0,Math.PI*2);ctx.fillStyle=C.rose;ctx.fill();
+    });
+    ctx.globalAlpha=fi;ctx.fillStyle=C.rose;ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('6 Fraud Archetypes injected  (≈0.7%)',W/2,H*.9);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 13px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('5-Segment Gaussian Mixture — 100,000 Normal Transactions',W/2,H*.1);ctx.globalAlpha=1;
+}
+
+// ── SCENE 3: Fraud Archetypes ────────────────────────────────
+function canvasFraud(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  const arch=[
+    {name:'1. High-value takeover',rho:'0.18%',col:C.rose,feat:'loc_dev·dev_chg·merch_ent·x_border·log_amt'},
+    {name:'2. Velocity card-testing',rho:'0.15%',col:C.gold,feat:'vel_1h·merch_ent·log_amt·loc_dev'},
+    {name:'3. Night device change',rho:'0.12%',col:C.purple,feat:'log_amt·hour·amt_dev·dev_chg'},
+    {name:'4. Merchant outlier',rho:'0.10%',col:C.teal,feat:'merch_ent·log_amt·vel_1h·amt_dev'},
+    {name:'5. Cross-border large',rho:'0.10%',col:C.blue,feat:'log_amt·x_border·vel_1h·amt_dev'},
+    {name:'6. Small probing',rho:'0.07%',col:C.orange,feat:'log_amt·amt_dev·merch_ent·vel_1h'},
+  ];
+  const rowH=(H*.82)/arch.length,startY=H*.1;
+  arch.forEach((a,i)=>{
+    const delay=i*.1,ar=ease.out3(ease.step(t,delay,delay+.2));if(ar<.01)return;
+    const y=startY+i*rowH;ctx.globalAlpha=ar;
+    ctx.fillStyle=C.panel;ctx.fillRect(W*.04,y,W*.92,rowH*.78);
+    ctx.strokeStyle=a.col;ctx.lineWidth=1.5;ctx.strokeRect(W*.04,y,W*.92,rowH*.78);
+    ctx.fillStyle=a.col;ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='left';
+    ctx.fillText(a.name,W*.07,y+rowH*.38);
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+    ctx.fillText('ρ='+a.rho,W*.5,y+rowH*.38);
+    ctx.fillStyle='rgba(192,207,224,.6)';ctx.font='8px Fira Code,monospace';
+    ctx.fillText(a.feat,W*.07,y+rowH*.65);ctx.globalAlpha=1;
+  });
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.1)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Six Injected Fraud Archetypes — Disjoint, Non-overlapping',W/2,H*.06);ctx.globalAlpha=1;
+}
+
+// ── SCENE 4: ZZ Encoding Overview ───────────────────────────
+function canvasZZOverview(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  // Feature vector → angles → Bloch → ZZ state
+  const steps=[
+    {x:W*.1,label:'Features\nx∈[0,1]^d',col:C.gold},
+    {x:W*.32,label:'Angular\nφ=π·x',col:C.teal},
+    {x:W*.55,label:'Hadamard\n|+⟩^⊗n',col:C.purple},
+    {x:W*.78,label:'ZZ State\n|ψ(x)⟩',col:C.green},
+  ];
+  const sy=H*.45,bw=64,bh=40;
+  steps.forEach((s,i)=>{
+    const ar=ease.out3(ease.step(t,i*.18,i*.18+.25));if(ar<.01)return;ctx.globalAlpha=ar;
+    if(i>0){
+      const px=steps[i-1].x,ar2=ease.out3(ease.step(t,(i-1)*.18+.2,i*.18+.12));
+      ctx.beginPath();ctx.moveTo(px+bw/2,sy+bh/2);ctx.lineTo(s.x-bw/2,sy+bh/2);
+      ctx.strokeStyle='rgba(60,80,120,.8)';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(s.x-bw/2-5,sy+bh/2-4);ctx.lineTo(s.x-bw/2,sy+bh/2);ctx.lineTo(s.x-bw/2-5,sy+bh/2+4);
+      ctx.fillStyle='rgba(60,80,120,.8)';ctx.fill();
+    }
+    ctx.fillStyle=C.panel;ctx.fillRect(s.x-bw/2,sy,bw,bh);
+    ctx.strokeStyle=s.col;ctx.lineWidth=2;ctx.strokeRect(s.x-bw/2,sy,bw,bh);
+    ctx.fillStyle=s.col;ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';
+    s.label.split('\n').forEach((l,li)=>ctx.fillText(l,s.x,sy+bh/2-2+(li-1+.5)*11));
+    ctx.globalAlpha=1;
+  });
+  // Hilbert space dimension balloon
+  if(t>.65){
+    const ba=ease.out3(ease.step(t,.65,.9));ctx.globalAlpha=ba;
+    ctx.fillStyle='rgba(136,85,255,.12)';ctx.fillRect(W*.62,H*.12,W*.32,H*.26);
+    ctx.strokeStyle=C.purple;ctx.lineWidth=1.5;ctx.strokeRect(W*.62,H*.12,W*.32,H*.26);
+    ctx.fillStyle=C.purple;ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Hilbert Space',W*.78,H*.2);
+    ctx.fillStyle=C.teal;ctx.font='bold 14px Fira Code,monospace';
+    ctx.fillText('Pipeline A: 2⁶ = 64D',W*.78,H*.28);
+    ctx.fillStyle=C.rose;ctx.font='bold 14px Fira Code,monospace';
+    ctx.fillText('Pipeline B: 2⁸ = 256D',W*.78,H*.35);ctx.globalAlpha=1;
+  }
+  // Circuit sketch
+  if(t>.4){
+    const ca=ease.out3(ease.step(t,.4,.65));ctx.globalAlpha=ca;
+    const qy=H*.72,qs=26,n=6,gap=10;
+    for(let i=0;i<n;i++){
+      const x=W*.12+i*(qs+gap);
+      ctx.strokeStyle='rgba(60,80,120,.6)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(x+qs,qy+qs/2);ctx.lineTo(x+(qs+gap)*6,qy+qs/2);ctx.stroke();
+      ctx.fillStyle=C.panel;ctx.fillRect(x,qy,qs,qs);
+      ctx.strokeStyle=C.teal;ctx.lineWidth=1;ctx.strokeRect(x,qy,qs,qs);
+      ctx.fillStyle=C.teal;ctx.font='bold 8px Fira Code,monospace';ctx.textAlign='center';
+      ctx.fillText('H',x+qs/2,qy+qs/2+3);
+      const x2=x+(qs+gap)*n*.4;
+      ctx.fillStyle=C.panel;ctx.fillRect(x2,qy,qs,qs);
+      ctx.strokeStyle=C.gold;ctx.lineWidth=1;ctx.strokeRect(x2,qy,qs,qs);
+      ctx.fillStyle=C.gold;ctx.fillText('Rz',x2+qs/2,qy+qs/2+3);
+    }
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('H⊗n · R_z gates · ZZ gates',W*.5,qy+qs+14);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 13px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('ZZ Feature Map: x ∈ [0,1]ᵈ → |ψ(x)⟩ ∈ ℂ^{2ⁿ}',W/2,H*.08);ctx.globalAlpha=1;
+}
+
+// ── SCENE 5: Rescaling & Hadamard ───────────────────────────
+function canvasHadamard(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const n=6,dim=1<<n;
+  // Binary tree
+  function drawLevel(level,x0,y0,xspan,maxY){
+    const nodes=1<<level;
+    const dy=(maxY-y0)/n;
+    if(level>=n)return;
+    for(let k=0;k<nodes;k++){
+      const xc=x0+xspan*(k+.5)/nodes;
+      const yc=y0+dy*(level+1);
+      const ar=ease.out3(ease.step(t,level*.14,level*.14+.2));if(ar<.01)continue;
+      // children
+      for(let c=0;c<2;c++){
+        const xc2=x0+xspan*((k*2+c)+.5)/(nodes*2);
+        const yc2=y0+dy*(level+2);
+        const ar2=ease.out3(ease.step(t,(level+1)*.14,(level+1)*.14+.18));
+        ctx.globalAlpha=ar2*.6;ctx.beginPath();ctx.moveTo(xc,yc);ctx.lineTo(xc2,yc2);
+        ctx.strokeStyle=c===0?C.teal:C.gold;ctx.lineWidth=.7;ctx.stroke();
+      }
+      ctx.globalAlpha=ar;ctx.beginPath();ctx.arc(xc,yc,3,0,Math.PI*2);
+      ctx.fillStyle=level%2===0?C.teal:C.gold;ctx.fill();ctx.globalAlpha=1;
+    }
+  }
+  const treeX=W*.04,treeY=H*.06,treeW=W*.94,treeH=H*.85;
+  for(let l=0;l<n;l++)drawLevel(l,treeX,treeY,treeW,treeH);
+  // Root
+  const ra=ease.clamp(ease.out3(ease.step(t,0,.15)));
+  ctx.globalAlpha=ra;ctx.beginPath();ctx.arc(W*.5,treeY+8,5,0,Math.PI*2);ctx.fillStyle=C.bright;ctx.fill();
+  ctx.fillStyle=C.bright;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='center';ctx.fillText('|0⟩⊗⁶',W*.5,treeY);
+  // Bottom label
+  if(t>.78){
+    const ba=ease.out3(ease.step(t,.78,.96));ctx.globalAlpha=ba;
+    ctx.fillStyle=C.teal;ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText(`H⊗⁶|0⟩⊗⁶ = 1/√64 · Σ |k⟩   (k = 0…63)`,W*.5,treeH+treeY+8);
+    ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';
+    ctx.fillText('Equal amplitude 1/√2ⁿ on all 64 basis states simultaneously',W*.5,treeH+treeY+22);ctx.globalAlpha=1;
+  }
+}
+
+// ── SCENE 6: ZZ Coupling ─────────────────────────────────────
+function canvasZZcoupling(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  // Two feature phasors
+  const cx=W*.35,cy=H*.45,R=H*.28;
+  const phi_q=0.94*Math.PI,phi_r=0.18*Math.PI; // example: high-risk transaction
+  const a1=ease.out3(ease.step(t,0,.3));
+  // Qubit q circle
+  ctx.globalAlpha=a1;
+  ctx.beginPath();ctx.arc(cx-R*.7,cy,R*.45,0,Math.PI*2);
+  ctx.strokeStyle='rgba(60,80,120,.4)';ctx.lineWidth=1;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx-R*.7,cy);
+  ctx.lineTo(cx-R*.7+Math.cos(phi_q)*R*.45,cy-Math.sin(phi_q)*R*.45);
+  ctx.strokeStyle=C.teal;ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle=C.teal;ctx.font='9px Fira Code,monospace';ctx.textAlign='center';
+  ctx.fillText('φ_q = π·x_q',cx-R*.7,cy+R*.52);ctx.fillText('= 2.95 rad',cx-R*.7,cy+R*.62);
+  ctx.beginPath();ctx.arc(cx+R*.7,cy,R*.45,0,Math.PI*2);
+  ctx.strokeStyle='rgba(60,80,120,.4)';ctx.lineWidth=1;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx+R*.7,cy);
+  ctx.lineTo(cx+R*.7+Math.cos(phi_r)*R*.45,cy-Math.sin(phi_r)*R*.45);
+  ctx.strokeStyle=C.gold;ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle=C.gold;ctx.fillText('φ_r = π·x_r',cx+R*.7,cy+R*.52);ctx.fillText('= 0.57 rad',cx+R*.7,cy+R*.62);ctx.globalAlpha=1;
+  // Rectangle area = coupling
+  if(t>.35){
+    const ra=ease.out3(ease.step(t,.35,.6));ctx.globalAlpha=ra;
+    const rx=W*.62,ry=H*.18,rw=(Math.PI-phi_q)*W*.12,rh=(Math.PI-phi_r)*H*.38;
+    ctx.fillStyle='rgba(255,68,136,.12)';ctx.fillRect(rx,ry,rw,rh);
+    ctx.strokeStyle=C.rose;ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.strokeRect(rx,ry,rw,rh);ctx.setLineDash([]);
+    ctx.fillStyle=C.rose;ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='center';
+    const theta=(Math.PI-phi_q)*(Math.PI-phi_r);
+    ctx.fillText(`θ_{qr} = (π−φ_q)(π−φ_r)`,rx+rw/2,ry+rh/2-6);
+    ctx.fillText(`= ${theta.toFixed(2)} rad²`,rx+rw/2,ry+rh/2+10);
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+    ctx.fillText('Area = ZZ coupling strength',rx+rw/2,ry+rh+14);ctx.globalAlpha=1;
+  }
+  // Phase accumulation across all basis states
+  if(t>.65){
+    const pa=ease.out3(ease.step(t,.65,.9));ctx.globalAlpha=pa;
+    const bx=W*.05,by=H*.76,bw2=W*.9,dotN=64;
+    ctx.fillStyle=C.teal;ctx.font='9px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('Phase Φ_k across all 64 basis states:',W*.5,by-8);
+    for(let k=0;k<dotN;k++){
+      const phase=seed(k*7)*Math.PI*2;const x=bx+k*(bw2/dotN)+4,y=by+8;
+      ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);
+      const hue=phase/(Math.PI*2);
+      ctx.fillStyle=`hsl(${hue*200+160|0},80%,60%)`;ctx.fill();
+    }
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+    ctx.fillText('k = 0 → 63  (colour = phase angle)',W*.5,by+20);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('ZZ Coupling: θ_{qr} = (π − φ_q)(π − φ_r) — area of the residual rectangle',W/2,H*.08);ctx.globalAlpha=1;
+}
+
+// ── SCENE 7: Quantum State & Interference ────────────────────
+function canvasInterference(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  const N=64,bw=W*.44/N;
+  // Normal transaction (constructive)
+  const nLabel='Normal transaction: constructive interference';
+  const aLabel='Anomalous transaction: destructive interference';
+  const normalPhases=Array.from({length:N},(_,k)=>seed(k*13)*0.6-0.3);
+  const anomPhases=Array.from({length:N},(_,k)=>seed(k*7)*Math.PI*2);
+  const meanPhase=Array.from({length:N},(_,k)=>seed(k*13)*0.6-0.3+seed(k*31)*.3);
+  function drawBars(ox,phases,meanPh,col,label,showScore,scoreVal){
+    const topY=H*.14,barH=H*.32,midY=H*.5;
+    ctx.fillStyle=col;ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';ctx.fillText(label,ox+W*.22,topY-8);
+    phases.forEach((ph,k)=>{
+      const diff=ph-meanPh[k],x=ox+k*bw;
+      const amp=Math.cos(diff)*.5+.5;
+      const h=amp*barH,y=midY-h;
+      const ar=ease.clamp(ease.out3(ease.step(t,.05,.5)));
+      ctx.globalAlpha=ar;ctx.fillStyle=col+'66';ctx.fillRect(x+.5,y,bw-.5,h);
+      // mean bar
+      ctx.fillStyle='rgba(192,207,224,.25)';ctx.fillRect(x+.5,midY,bw-.5,4);ctx.globalAlpha=1;
+    });
+    if(showScore&&t>.6){
+      const sa=ease.out3(ease.step(t,.6,.85));ctx.globalAlpha=sa;
+      ctx.fillStyle=col;ctx.font='bold 14px Fira Code,monospace';ctx.textAlign='center';
+      ctx.fillText(`S_K = ${scoreVal}`,ox+W*.22,midY+H*.16);
+      ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';
+      ctx.fillText(scoreVal<0.2?'← near-zero → NORMAL':'← near-one → ANOMALOUS',ox+W*.22,midY+H*.26);ctx.globalAlpha=1;
+    }
+  }
+  const ha=ease.out3(ease.step(t,0,.2));ctx.globalAlpha=ha;
+  ctx.strokeStyle='rgba(26,34,64,.5)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(W*.5,0);ctx.lineTo(W*.5,H);ctx.stroke();ctx.globalAlpha=1;
+  drawBars(W*.02,normalPhases,meanPhase,C.teal,nLabel,true,'0.04');
+  drawBars(W*.52,anomPhases,meanPhase,C.rose,aLabel,true,'0.81');
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Quantum Interference: S_K(x) = 1 − |⟨μ_φ|ψ(x)⟩|²',W/2,H*.08);ctx.globalAlpha=1;
+}
+
+// ── SCENE 8: Population Mean State & Scoring ─────────────────
+function canvasMeanState(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  // Many states averaging into mean
+  const M=12,cx=W*.5,cy=H*.42,R=H*.28;
+  const drawState=(x,y,col,label,a)=>{
+    ctx.globalAlpha=a;ctx.beginPath();ctx.arc(x,y,18,0,Math.PI*2);
+    ctx.fillStyle=col+'22';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle=col;ctx.font='8px Fira Code,monospace';ctx.textAlign='center';ctx.fillText(label,x,y+30);ctx.globalAlpha=1;
+  };
+  // Reference cloud
+  const r1=ease.out3(ease.step(t,0,.35));
+  for(let i=0;i<M;i++){
+    const ang=(i/M)*Math.PI*2,x=cx+R*Math.cos(ang),y=cy+R*Math.sin(ang);
+    const a=r1*(.4+seed(i)*0.4);
+    drawState(x,y,C.teal,`|ψ(x_${i})⟩`,a);
+    // Arrow to centre
+    if(r1>.4){
+      const ar2=ease.out3(ease.step(t,.25,.55));ctx.globalAlpha=ar2*.4;
+      const dx=cx-x,dy=cy-y,len=Math.hypot(dx,dy);
+      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(cx-dx/len*22,cy-dy/len*22);
+      ctx.strokeStyle=C.teal;ctx.lineWidth=.8;ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+    }
+  }
+  // Mean state
+  if(t>.3){
+    const ma=ease.out3(ease.step(t,.3,.6));ctx.globalAlpha=ma;
+    ctx.beginPath();ctx.arc(cx,cy,28+Math.sin(t*Math.PI*3)*4,0,Math.PI*2);
+    const grd=ctx.createRadialGradient(cx,cy,0,cx,cy,32);
+    grd.addColorStop(0,'rgba(0,212,200,.5)');grd.addColorStop(1,'rgba(0,212,200,.05)');
+    ctx.fillStyle=grd;ctx.fill();ctx.strokeStyle=C.teal;ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle=C.bright;ctx.font='bold 10px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('|μ_φ⟩',cx,cy+4);
+    ctx.fillStyle=C.teal;ctx.font='8px Fira Code,monospace';ctx.fillText('Mean state',cx,cy+44);
+    ctx.fillText('M=3,000 ref',cx,cy+56);ctx.globalAlpha=1;
+  }
+  // Score distribution
+  if(t>.62){
+    const da=ease.out3(ease.step(t,.62,.88));ctx.globalAlpha=da;
+    const bx=W*.06,by=H*.76,bw2=W*.88,bh2=H*.18;
+    ctx.fillStyle=C.teal+'22';ctx.fillRect(bx,by,bw2*.62,bh2);
+    ctx.fillStyle=C.rose+'22';ctx.fillRect(bx+bw2*.62,by,bw2*.38,bh2);
+    ctx.strokeStyle='rgba(60,80,120,.5)';ctx.lineWidth=1;ctx.strokeRect(bx,by,bw2,bh2);
+    ctx.fillStyle=C.teal;ctx.font='9px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('Normal: S_K ≈ 0',bx+bw2*.31,by+bh2*.55);
+    ctx.fillStyle=C.rose;ctx.fillText('Anomalous: S_K ≈ 1',bx+bw2*.81,by+bh2*.55);
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+    ctx.fillText('|←————— 100,000 transactions scored —————→|',W*.5,by+bh2+10);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Population Mean State: |μ_φ⟩ = normalise(1/M · Σ|ψ(xᵢ)⟩)',W/2,H*.07);ctx.globalAlpha=1;
+}
+
+// ── SCENE 9: Pre-screening ────────────────────────────────────
+function canvasPrescreen(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  const total=100000,kept=50;
+  const eliminated=ease.out3(ease.step(t,.3,.8));
+  // Funnel
+  const fx=W*.2,fy=H*.15,fw=W*.6,fh=H*.55;
+  ctx.beginPath();ctx.moveTo(fx,fy);ctx.lineTo(fx+fw,fy);
+  ctx.lineTo(fx+fw*.5+fw*.08,fy+fh);ctx.lineTo(fx+fw*.5-fw*.08,fy+fh);
+  ctx.closePath();ctx.fillStyle='rgba(0,212,200,.05)';ctx.fill();
+  ctx.strokeStyle='rgba(0,212,200,.4)';ctx.lineWidth=1.5;ctx.stroke();
+  // Dots raining in
+  const nDots=80;
+  for(let i=0;i<nDots;i++){
+    const phase=seed(i*7)*Math.PI*2;
+    const xr=fx+fw*seed(i*3),yFall=fy+t*fh*(0.6+seed(i)*0.4);
+    const inFunnel=xr>fx+fw*(yFall-fy)/fh*.08&&xr<fx+fw-fw*(yFall-fy)/fh*.08;
+    if(!inFunnel||yFall>fy+fh)continue;
+    const isKept=(i<3);
+    const elim=eliminated>seed(i*11)&&!isKept;
+    ctx.beginPath();ctx.arc(xr,yFall,2.5,0,Math.PI*2);
+    ctx.fillStyle=elim?'rgba(255,68,136,.3)':isKept?C.teal:'rgba(0,212,200,.5)';ctx.fill();
+  }
+  // Counter
+  const a1=ease.clamp(ease.out3(ease.step(t,0,.25)));
+  ctx.globalAlpha=a1;ctx.fillStyle=C.bright;ctx.font='bold 16px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('100,000',W*.5,H*.1);ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';
+  ctx.fillText('transactions scored by ZZ kernel',W*.5,H*.15);ctx.globalAlpha=1;
+  if(t>.45){
+    const ba=ease.out3(ease.step(t,.45,.75));ctx.globalAlpha=ba;
+    const eliminated_count=Math.floor((total-kept)*eliminated);
+    ctx.fillStyle=C.rose;ctx.font='bold 14px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText(`${eliminated_count.toLocaleString()} ELIMINATED`,W*.5,H*.77);
+    ctx.fillStyle=C.teal;ctx.font='bold 16px Rajdhani,sans-serif';
+    ctx.fillText(`TOP-50 SURVIVE →`,W*.5,H*.87);
+    ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';
+    ctx.fillText('99.95th percentile threshold',W*.5,H*.92);ctx.globalAlpha=1;
+  }
+}
+
+// ── SCENE 10: Quantum Autoencoder ────────────────────────────
+function canvasQAE(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const cols=[8,5,3,5,8],colW=W*.84,colX=(W-colW)/2;
+  const nodeR=9,nodeGap=colW/(cols.length-1),yc=H*.44;
+  const labels=['Input\n8D','Hidden\n5D','Latent\n3D\n(bottleneck)','Hidden\n5D','Output\n8D'];
+  const colLabel=['Input','Encoder','Latent','Decoder','Output'];
+  const colY=cols.map((n,ci)=>{
+    const start=yc-((n-1)/2)*nodeR*2.6;
+    return Array.from({length:n},(_,ni)=>({x:colX+ci*nodeGap,y:start+ni*nodeR*2.6}));
+  });
+  // Draw connections
+  const cr=ease.out3(ease.step(t,.1,.55));
+  for(let ci=0;ci<cols.length-1;ci++){
+    colY[ci].forEach(n1=>colY[ci+1].forEach(n2=>{
+      const isTrash=(ci===1||ci===2)&&n1.y>yc+nodeR*2.6;
+      ctx.beginPath();ctx.moveTo(n1.x,n1.y);ctx.lineTo(n2.x,n2.y);
+      ctx.strokeStyle=isTrash?`rgba(255,68,136,${cr*.25})`:`rgba(0,212,200,${cr*.12})`;
+      ctx.lineWidth=.8;ctx.stroke();
+    }));
+  }
+  // Draw nodes
+  const nr=ease.out3(ease.step(t,0,.3));
+  colY.forEach((col,ci)=>{
+    col.forEach((n,ni)=>{
+      const isLatent=ci===2,isTrash=(ci===1||ci===2||ci===3)&&n.y>yc+nodeR*2.6;
+      ctx.globalAlpha=nr;ctx.beginPath();ctx.arc(n.x,n.y,nodeR,0,Math.PI*2);
+      ctx.fillStyle=isLatent?C.teal:isTrash?C.rose:C.panel;ctx.fill();
+      ctx.strokeStyle=isLatent?C.teal:isTrash?C.rose:C.purple;ctx.lineWidth=1.5;ctx.stroke();ctx.globalAlpha=1;
+    });
+  });
+  // Labels
+  if(nr>.4){
+    colY.forEach((col,ci)=>{
+      ctx.globalAlpha=nr;ctx.fillStyle=ci===2?C.teal:ci===1||ci===3?C.purple:C.dim;
+      ctx.font='8px Fira Code,monospace';ctx.textAlign='center';
+      const topY=col[0].y-nodeR-8;
+      labels[ci].split('\n').forEach((l,li)=>ctx.fillText(l,col[0].x,topY-li*9));ctx.globalAlpha=1;
+    });
+  }
+  // Trash register label
+  if(t>.5){
+    const ta=ease.out3(ease.step(t,.5,.75));ctx.globalAlpha=ta;
+    const trashX=colX+nodeGap*1.5,trashY=yc+nodeR*4;
+    ctx.fillStyle=C.rose;ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Trash register',trashX,trashY);
+    ctx.font='8px Fira Code,monospace';ctx.fillStyle=C.dim;
+    ctx.fillText('= irreducible anomalous info',trashX,trashY+12);ctx.globalAlpha=1;
+  }
+  // Reconstruction error bar
+  if(t>.7){
+    const ea=ease.out3(ease.step(t,.7,.92));ctx.globalAlpha=ea;
+    const ex=W*.06,ey=H*.78,ew=W*.88,eh=14;
+    ctx.fillStyle='rgba(136,85,255,.15)';ctx.fillRect(ex,ey,ew*.3,eh);
+    ctx.fillStyle='rgba(255,68,136,.4)';ctx.fillRect(ex+ew*.3,ey,ew*.7,eh);
+    ctx.strokeStyle='rgba(136,85,255,.4)';ctx.lineWidth=1;ctx.strokeRect(ex,ey,ew,eh);
+    ctx.fillStyle=C.purple;ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Normal: ε ≈ 0',ex+ew*.15,ey+eh+12);
+    ctx.fillStyle=C.rose;ctx.fillText('Anomalous: ε large',ex+ew*.65,ey+eh+12);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Quantum Autoencoder: 8D → 3D → 8D — Reconstruction Error = Anomaly Score',W/2,H*.07);ctx.globalAlpha=1;
+}
+
+// ── SCENE 11: Score Fusion ───────────────────────────────────
+function canvasFusion(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const ox=55,oy=H*.78,pw=W-ox-28,ph=H*.6;
+  ctx.strokeStyle=C.dim;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(ox,oy-ph);ctx.lineTo(ox,oy+5);ctx.lineTo(ox+pw,oy+5);ctx.stroke();
+  ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';ctx.textAlign='center';
+  ctx.fillText('S_K (Kernel score)',ox+pw*.35,oy+24);
+  ctx.save();ctx.translate(18,oy-ph*.5);ctx.rotate(-Math.PI/2);ctx.fillText('S_A (Autoencoder score)',0,0);ctx.restore();
+  // Scatter: normal (low both), anomaly clusters by archetype
+  const pts=[
+    // Normal cloud
+    ...Array.from({length:40},(_,i)=>({x:seed(i*11)*.35,y:seed(i*11+3)*.35,col:C.teal+'66',r:2.5})),
+    // Archetype clusters
+    ...Array.from({length:8},(_,i)=>({x:.68+seed(i*31)*.2,y:.55+seed(i*31+7)*.3,col:C.rose,r:4})),
+    ...Array.from({length:6},(_,i)=>({x:.55+seed(i*41)*.25,y:.72+seed(i*41+5)*.2,col:C.gold,r:4})),
+    ...Array.from({length:5},(_,i)=>({x:.72+seed(i*53)*.2,y:.42+seed(i*53+9)*.25,col:C.purple,r:4})),
+  ];
+  const sr=ease.out3(ease.step(t,0,.55));
+  pts.forEach((p,i)=>{
+    const dr=ease.out3(ease.step(t,(i/pts.length)*.5,i/pts.length*.5+.2));
+    ctx.globalAlpha=dr*sr;ctx.beginPath();ctx.arc(ox+p.x*pw,oy-p.y*ph,p.r,0,Math.PI*2);
+    ctx.fillStyle=p.col;ctx.fill();ctx.globalAlpha=1;
+  });
+  // Fusion line
+  if(t>.5){
+    const fa=ease.out3(ease.step(t,.5,.75));ctx.globalAlpha=fa;
+    const x1=ox,y1=oy-0.55*0.45*ph,x2=ox+pw,y2=oy-(0.45/0.55)*pw/pw*ph+20;
+    ctx.beginPath();ctx.moveTo(x1,oy-ph*.25);ctx.lineTo(x2,oy-ph*.65);
+    ctx.strokeStyle=C.gold;ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=C.gold;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('S_C = 0.55·S_K + 0.45·S_A',W*.5,oy-ph*.72);ctx.globalAlpha=1;
+  }
+  // Top-14 selection box
+  if(t>.72){
+    const ba=ease.out3(ease.step(t,.72,.92));ctx.globalAlpha=ba;
+    ctx.fillStyle='rgba(0,212,200,.08)';ctx.fillRect(ox+pw*.52,oy-ph,pw*.48,ph*.55);
+    ctx.strokeStyle=C.teal;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.strokeRect(ox+pw*.52,oy-ph,pw*.48,ph*.55);ctx.setLineDash([]);
+    ctx.fillStyle=C.teal;ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Top-14 → QAOA',ox+pw*.76,oy-ph*.5);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Score Fusion: S_C = 0.55·S_K + 0.45·S_A — Kernel & Autoencoder are complementary',W/2,H*.07);ctx.globalAlpha=1;
+}
+
+// ── SCENE 12: QAOA – QUBO & Budget ───────────────────────────
+function canvasQAOAQubo(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  // 14 candidate bars
+  const C14=14,bw=24,gap=8,totalBW=C14*(bw+gap),bsx=(W-totalBW)/2,maxBH=H*.5,baseY=H*.7;
+  const scores=[.92,.88,.84,.81,.76,.72,.68,.65,.60,.55,.48,.41,.32,.24];
+  const budget=7;
+  const br=ease.out3(ease.step(t,0,.45));
+  scores.forEach((s,i)=>{
+    const bh=s*maxBH*br,bx=bsx+i*(bw+gap),by=baseY-bh;
+    const selected=i<budget&&t>.5;
+    const sa=ease.out3(ease.step(t,.5,.8));
+    const grd=ctx.createLinearGradient(bx,by,bx,baseY);
+    grd.addColorStop(0,selected?`rgba(0,212,200,${.9*sa})`:i<budget?`rgba(245,168,32,${.7*sa})`:'rgba(100,130,160,.5)');
+    grd.addColorStop(1,selected?`rgba(0,212,200,${.2*sa})`:'rgba(26,34,64,.2)');
+    ctx.fillStyle=grd;ctx.fillRect(bx,by,bw,bh);
+    ctx.strokeStyle=selected?C.teal:'rgba(60,80,120,.4)';ctx.lineWidth=1;ctx.strokeRect(bx,by,bw,bh);
+    ctx.fillStyle=C.dim;ctx.font='7px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText(`C${i+1}`,bx+bw/2,baseY+12);
+  });
+  // Budget line
+  if(t>.35){
+    const ta=ease.out3(ease.step(t,.35,.6));ctx.globalAlpha=ta;
+    const tau=scores[budget-1]+.04,ty=baseY-tau*maxBH*br;
+    ctx.beginPath();ctx.moveTo(bsx,ty);ctx.lineTo(bsx+totalBW,ty);
+    ctx.strokeStyle=C.gold;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=C.gold;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='right';
+    ctx.fillText(`B = ${budget}  (IQR adaptive)`,bsx+totalBW,ty-5);ctx.globalAlpha=1;
+  }
+  // QUBO matrix sketch
+  if(t>.62){
+    const qa=ease.out3(ease.step(t,.62,.88));ctx.globalAlpha=qa;
+    const qx=bsx-20,qy=H*.78,qs=10,n2=14;
+    ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';ctx.textAlign='left';ctx.fillText('H_C = Σ hᵢZᵢ + Σᵢ<ⱼ JᵢⱼZᵢZⱼ',qx,qy-6);
+    for(let i=0;i<5;i++)for(let j=0;j<5;j++){
+      const v=(i===j)?-scores[i]:.08;
+      ctx.fillStyle=v<0?`rgba(0,212,200,${Math.min(1,-v)*.6})`:`rgba(255,68,136,${v*.4})`;
+      ctx.fillRect(qx+j*qs,qy+i*qs,qs-1,qs-1);
+    }
+    ctx.strokeStyle='rgba(60,80,120,.4)';ctx.lineWidth=1;ctx.strokeRect(qx,qy,5*qs,5*qs);
+    ctx.fillStyle=C.dim;ctx.font='7px Fira Code,monospace';ctx.textAlign='left';ctx.fillText('Q (5×5 shown)',qx,qy+5*qs+10);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('QAOA: Select B Anomalies from 14 Candidates via Ising Hamiltonian',W/2,H*.08);ctx.globalAlpha=1;
+}
+
+// ── SCENE 13: QAOA Circuit & Tunnelling ──────────────────────
+function canvasQAOACircuit(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  const p=3,C14=14,qH=18,qG=7,totalQH=C14*(qH+qG),startY=(H*.7-totalQH)/2;
+  const r0=ease.out3(ease.step(t,0,.2));
+  // Initial state label
+  ctx.globalAlpha=r0;ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';ctx.textAlign='left';
+  ctx.fillText('|+⟩⊗¹⁴  (uniform superposition)',W*.03,startY+totalQH/2+3);ctx.globalAlpha=1;
+  // Wire layers
+  const layerX=[W*.24,W*.4,W*.56,W*.72,W*.88];
+  const layerLabels=['U_C(γ₁)','U_B(β₁)','U_C(γ₂)','U_B(β₂)','Measure'];
+  for(let q=0;q<C14;q++){
+    const y=startY+q*(qH+qG)+qH/2;
+    const wr=ease.out3(ease.step(t,q/C14*.3,q/C14*.3+.2));ctx.globalAlpha=wr;
+    ctx.beginPath();ctx.moveTo(W*.22,y);ctx.lineTo(W*.95,y);
+    ctx.strokeStyle='rgba(60,80,120,.5)';ctx.lineWidth=1;ctx.stroke();ctx.globalAlpha=1;
+  }
+  // Gate blocks
+  layerLabels.forEach((lbl,li)=>{
+    const lr=ease.out3(ease.step(t,.12+li*.15,.12+li*.15+.18));if(lr<.01)return;
+    const x=layerX[li],bw=li===4?14:36,col=li%2===0?C.teal:C.gold;
+    ctx.globalAlpha=lr;
+    ctx.fillStyle=col+'22';ctx.fillRect(x-bw/2,startY-4,bw,totalQH+8);
+    ctx.strokeStyle=col+'88';ctx.lineWidth=1;ctx.strokeRect(x-bw/2,startY-4,bw,totalQH+8);
+    ctx.fillStyle=col;ctx.font=li===4?'7px Fira Code,monospace':'bold 8px Fira Code,monospace';
+    ctx.textAlign='center';ctx.fillText(lbl,x,startY+totalQH+20);ctx.globalAlpha=1;
+  });
+  // Probability bars
+  if(t>.72){
+    const ba=ease.out3(ease.step(t,.72,.92));ctx.globalAlpha=ba;
+    const px=W*.04,py=H*.77,pw2=W*.5,ph2=H*.16;
+    ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';ctx.textAlign='left';ctx.fillText('Marginal prob pᵢ:',px,py-5);
+    for(let i=0;i<C14;i++){
+      const prob=i<7?(.92-i*.07)+seed(i*13)*.04:.15-i*.005+seed(i*17)*.04;
+      const bw2=prob*pw2*.88,bx2=px+(i*(pw2/C14)),by2=py;
+      ctx.fillStyle=prob>.55?C.teal+'bb':C.dim+'66';
+      ctx.fillRect(bx2,by2,Math.max(bw2,2),ph2*.5);
+      ctx.fillStyle=C.dim;ctx.font='6px Fira Code,monospace';ctx.textAlign='center';
+      ctx.fillText(`C${i+1}`,bx2+pw2/C14/2,py+ph2*.5+8);
+    }
+    ctx.fillStyle=C.teal;ctx.font='bold 9px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Top-B by marginal probability → confirmed anomalies',W*.32,py+ph2*.5+20);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('QAOA Circuit: p=3 layers · 3 restarts · 14 gradient steps',W/2,H*.06);ctx.globalAlpha=1;
+}
+
+// ── SCENE 14: QAOA Energy Landscape ──────────────────────────
+function canvasQAOAEnergy(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  const ox=50,oy=H*.78,pw=W-ox-28,ph=H*.58;
+  const ls=u=>.45*Math.sin(u*Math.PI*2.8)+.22*Math.cos(u*Math.PI*6.1)+.15*Math.sin(u*Math.PI*11)+.12;
+  ctx.strokeStyle=C.dim;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(ox,oy-ph);ctx.lineTo(ox,oy+5);ctx.lineTo(ox+pw,oy+5);ctx.stroke();
+  ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';ctx.textAlign='center';
+  ctx.fillText('QAOA parameter γ',ox+pw/2,oy+24);
+  ctx.beginPath();for(let k=0;k<=300;k++){const u=k/300,x=ox+u*pw,y2=oy-ls(u)*ph;k===0?ctx.moveTo(x,y2):ctx.lineTo(x,y2);}
+  ctx.strokeStyle=C.gold;ctx.lineWidth=2.5;ctx.stroke();
+  // QAOA probability cloud
+  if(t>.2){
+    const qr=ease.out3(ease.step(t,.2,.7));
+    const globalMin=.72;
+    for(let k=0;k<=300;k++){
+      const u=k/300;const dist=Math.abs(u-globalMin);
+      const prob=Math.exp(-dist*dist*18*qr);
+      ctx.fillStyle=`rgba(0,212,200,${prob*.4})`;
+      ctx.fillRect(ox+u*pw,oy-ls(u)*ph-5,pw/300+1,10);
+    }
+    // Global minimum marker
+    const gx=ox+globalMin*pw,gy=oy-ls(globalMin)*ph;
+    const pulse=.5+.5*Math.sin(t*Math.PI*8);
+    ctx.beginPath();ctx.arc(gx,gy,8+pulse*4,0,Math.PI*2);ctx.fillStyle=`rgba(0,212,200,${.15*pulse})`;ctx.fill();
+    ctx.beginPath();ctx.arc(gx,gy,5,0,Math.PI*2);ctx.fillStyle=C.teal;ctx.fill();
+    ctx.fillStyle=C.teal;ctx.font='8px Fira Code,monospace';ctx.textAlign='left';ctx.fillText('Global min',gx+8,gy-6);
+  }
+  // Classical path (trapped)
+  if(t>.45){
+    const cp=ease.step(t,.45,.85);const walkU=[.08,.14,.22,.27,.3];
+    const si=Math.min(Math.floor(cp*walkU.length),walkU.length-1);
+    ctx.beginPath();walkU.slice(0,si+1).forEach((u,i)=>{const x=ox+u*pw,y2=oy-ls(u)*ph;i===0?ctx.moveTo(x,y2):ctx.lineTo(x,y2);});
+    ctx.strokeStyle='rgba(245,168,32,.5)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+    const cu=walkU[Math.min(si,walkU.length-1)];
+    const cpx=ox+cu*pw,cpy=oy-ls(cu)*ph;
+    ctx.beginPath();ctx.arc(cpx,cpy,6,0,Math.PI*2);ctx.fillStyle=C.gold;ctx.fill();
+    ctx.fillStyle=C.gold;ctx.font='7px Fira Code,monospace';ctx.textAlign='left';ctx.fillText('Classical: trapped',cpx+8,cpy+4);
+  }
+  if(t>.78){
+    const pa=ease.out3(ease.step(t,.78,.96));ctx.globalAlpha=pa;
+    ctx.fillStyle=C.teal;ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('QAOA: amplitude concentrates on global minimum via interference',W*.5,oy+42);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('QAOA Energy Landscape: Phase Separator + Mixer Enable Quantum Tunnelling',W/2,H*.07);ctx.globalAlpha=1;
+}
+
+// ── SCENE 15: Anomaly Fingerprint ────────────────────────────
+function canvasFingerprint(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  const features=['log_amt','hour','merch_ent','vel_1h','loc_dev','dev_chg','amt_dev','x_border'];
+  const zscores=[.12,3.78,2.95,.24,4.21,4.56,.18,.87];
+  const n=features.length,cx=W*.35,cy=H*.48,R=Math.min(W*.28,H*.38);
+  const r0=ease.out3(ease.step(t,0,.3));
+  // Axis lines
+  for(let i=0;i<n;i++){
+    const ang=i/n*Math.PI*2-Math.PI/2;
+    ctx.globalAlpha=r0*.5;ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);
+    ctx.strokeStyle=C.dim;ctx.lineWidth=.8;ctx.stroke();ctx.globalAlpha=1;
+    ctx.globalAlpha=r0;ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText(features[i],cx+Math.cos(ang)*(R+18),cy+Math.sin(ang)*(R+18));ctx.globalAlpha=1;
+  }
+  // Reference rings
+  [.25,.5,.75,1].forEach(r=>{
+    ctx.beginPath();
+    for(let i=0;i<=n;i++){const ang=i/n*Math.PI*2-Math.PI/2;i===0?ctx.moveTo(cx+Math.cos(ang)*R*r,cy+Math.sin(ang)*R*r):ctx.lineTo(cx+Math.cos(ang)*R*r,cy+Math.sin(ang)*R*r);}
+    ctx.strokeStyle=`rgba(26,34,64,${r0*.6})`;ctx.lineWidth=.8;ctx.stroke();
+  });
+  // Anomaly polygon
+  if(t>.25){
+    const pr=ease.out3(ease.step(t,.25,.7));
+    ctx.beginPath();
+    features.forEach((_,i)=>{
+      const ang=i/n*Math.PI*2-Math.PI/2;const v=Math.min(1,zscores[i]/5.5)*pr;
+      const x=cx+Math.cos(ang)*R*v,y=cy+Math.sin(ang)*R*v;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.closePath();ctx.fillStyle='rgba(255,68,136,.18)';ctx.fill();
+    ctx.strokeStyle=C.rose;ctx.lineWidth=2;ctx.stroke();
+    features.forEach((_,i)=>{
+      const ang=i/n*Math.PI*2-Math.PI/2;const v=Math.min(1,zscores[i]/5.5)*pr;
+      ctx.beginPath();ctx.arc(cx+Math.cos(ang)*R*v,cy+Math.sin(ang)*R*v,3.5,0,Math.PI*2);
+      ctx.fillStyle=zscores[i]>2.5?C.rose:C.dim;ctx.fill();
+    });
+  }
+  // Legend
+  if(t>.6){
+    const la=ease.out3(ease.step(t,.6,.85));ctx.globalAlpha=la;
+    const lx=W*.66,ly=H*.24;
+    ctx.fillStyle=C.bright;ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='left';ctx.fillText('Top anomaly drivers:',lx,ly);
+    const topFeatures=zscores.map((z,i)=>({z,i})).sort((a,b)=>b.z-a.z).slice(0,3);
+    topFeatures.forEach((f,k)=>{
+      ctx.fillStyle=k===0?C.rose:k===1?C.gold:C.purple;ctx.font='9px Fira Code,monospace';
+      ctx.fillText(`${k+1}. ${features[f.i]}  z=${f.z.toFixed(2)}`,lx,ly+16+k*14);
+    });
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+    ctx.fillText('Pattern: Night·device-change·takeover',lx,ly+66);
+    ctx.fillText('archetype identified without labels',lx,ly+78);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Anomaly Fingerprint: Per-feature z-scores on 8-axis radar chart',W/2,H*.07);ctx.globalAlpha=1;
+}
+
+// ── SCENE 16: Supervised vs Unsupervised ─────────────────────
+function canvasSupVsUnsup(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const cells=[
+    {label:'(U,A)',sub:'Unsup · Engineered',auc:'0.737',col:C.teal,x:W*.25,y:H*.35},
+    {label:'(S,A)',sub:'Sup · Engineered',auc:'0.752',col:C.green,x:W*.62,y:H*.35},
+    {label:'(U,B)',sub:'Unsup · Raw fields',auc:'0.542',col:C.purple,x:W*.25,y:H*.68},
+    {label:'(S,B)',sub:'Sup · Raw fields',auc:'0.667',col:C.rose,x:W*.62,y:H*.68},
+  ];
+  const r0=ease.out3(ease.step(t,0,.35));
+  cells.forEach((c,i)=>{
+    const dr=ease.out3(ease.step(t,i*.1,i*.1+.25));if(dr<.01)return;ctx.globalAlpha=dr;
+    const bw=W*.28,bh=H*.2;
+    ctx.fillStyle=C.panel;ctx.fillRect(c.x-bw/2,c.y-bh/2,bw,bh);
+    ctx.strokeStyle=c.col;ctx.lineWidth=2;ctx.strokeRect(c.x-bw/2,c.y-bh/2,bw,bh);
+    ctx.fillStyle=c.col;ctx.font='bold 14px Rajdhani,sans-serif';ctx.textAlign='center';ctx.fillText(c.label,c.x,c.y-bh*.15);
+    ctx.fillStyle='rgba(192,207,224,.7)';ctx.font='8px Fira Code,monospace';ctx.fillText(c.sub,c.x,c.y+bh*.05);
+    ctx.fillStyle=c.col;ctx.font='bold 16px Fira Code,monospace';ctx.fillText('AUC '+c.auc,c.x,c.y+bh*.3);ctx.globalAlpha=1;
+  });
+  // Gap arrows
+  if(t>.5){
+    const ga=ease.out3(ease.step(t,.5,.75));ctx.globalAlpha=ga;
+    // Gap 1: U,A → S,A
+    const g1val=0.015;
+    ctx.beginPath();ctx.moveTo(W*.4,H*.35);ctx.lineTo(W*.47,H*.35);ctx.strokeStyle=C.gold;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=C.gold;ctx.font='bold 8px Fira Code,monospace';ctx.textAlign='center';ctx.fillText(`+${g1val.toFixed(3)}`,W*.435,H*.31);
+    ctx.fillStyle=C.dim;ctx.font='7px Fira Code,monospace';ctx.fillText('Gap 1: label value',W*.435,H*.27);
+    // Gap 3: U,A → U,B
+    ctx.beginPath();ctx.moveTo(W*.25,H*.47);ctx.lineTo(W*.25,H*.56);ctx.strokeStyle=C.purple;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=C.purple;ctx.font='bold 8px Fira Code,monospace';ctx.textAlign='center';ctx.fillText('-0.195',W*.14,H*.51);
+    ctx.fillStyle=C.dim;ctx.font='7px Fira Code,monospace';ctx.fillText('Gap 3: Hilbert',W*.14,H*.47);
+    ctx.globalAlpha=1;
+  }
+  if(t>.72){
+    const ra=ease.out3(ease.step(t,.72,.92));ctx.globalAlpha=ra;
+    ctx.fillStyle=C.gold;ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Research Q: does larger Hilbert space compensate for absent labels?',W*.5,H*.88);
+    ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';
+    ctx.fillText('n*(ρ) = qubit count where (U,B) matches (S,A)',W*.5,H*.93);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Four-Way Comparison: Supervised vs Unsupervised × Engineered vs Raw',W/2,H*.08);ctx.globalAlpha=1;
+}
+
+// ── SCENE 17: Pollution Bound ────────────────────────────────
+function canvasPollution(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  // Two mean state vectors
+  const cx=W*.5,cy=H*.45,R=H*.3;
+  const muSupAngle=-0.2,muUnsupAngle=0.25;
+  const r1=ease.out3(ease.step(t,0,.3));
+  // Hilbert space circle
+  ctx.globalAlpha=r1*.4;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.strokeStyle=C.border;ctx.lineWidth=1;ctx.stroke();ctx.globalAlpha=1;
+  // mu_sup
+  ctx.globalAlpha=r1;
+  ctx.beginPath();ctx.moveTo(cx,cy);
+  ctx.lineTo(cx+Math.cos(muSupAngle)*R*.88,cy+Math.sin(muSupAngle)*R*.88);
+  ctx.strokeStyle=C.green;ctx.lineWidth=2.5;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx+Math.cos(muSupAngle)*R*.88,cy+Math.sin(muSupAngle)*R*.88,7,0,Math.PI*2);
+  ctx.fillStyle=C.green;ctx.fill();
+  ctx.fillStyle=C.green;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='left';
+  ctx.fillText('|μ_sup⟩',cx+Math.cos(muSupAngle)*R*.88+12,cy+Math.sin(muSupAngle)*R*.88+4);ctx.globalAlpha=1;
+  // mu_unsup
+  if(t>.2){
+    const u2=ease.out3(ease.step(t,.2,.5));ctx.globalAlpha=u2;
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+Math.cos(muUnsupAngle)*R*.78,cy+Math.sin(muUnsupAngle)*R*.78);
+    ctx.strokeStyle=C.teal;ctx.lineWidth=2;ctx.stroke();
+    ctx.beginPath();ctx.arc(cx+Math.cos(muUnsupAngle)*R*.78,cy+Math.sin(muUnsupAngle)*R*.78,7,0,Math.PI*2);
+    ctx.fillStyle=C.teal;ctx.fill();
+    ctx.fillStyle=C.teal;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='right';
+    ctx.fillText('|μ_unsup⟩',cx+Math.cos(muUnsupAngle)*R*.78-12,cy+Math.sin(muUnsupAngle)*R*.78+4);ctx.globalAlpha=1;
+  }
+  // Displacement arrow
+  if(t>.42){
+    const da=ease.out3(ease.step(t,.42,.65));ctx.globalAlpha=da;
+    const x1=cx+Math.cos(muSupAngle)*R*.88,y1=cy+Math.sin(muSupAngle)*R*.88;
+    const x2=cx+Math.cos(muUnsupAngle)*R*.78,y2=cy+Math.sin(muUnsupAngle)*R*.78;
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+    ctx.strokeStyle=C.rose;ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=C.rose;ctx.font='bold 9px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('||μ_sup − μ_unsup|| = ρ·||δ||',cx,cy+R*.95);
+    ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';
+    ctx.fillText('ρ = 0.0035  →  ≈10 fraud samples contaminate ref',cx,cy+R*1.1);ctx.globalAlpha=1;
+  }
+  // Empirical values
+  if(t>.65){
+    const ea=ease.out3(ease.step(t,.65,.88));ctx.globalAlpha=ea;
+    ctx.fillStyle=C.panel;ctx.fillRect(W*.04,H*.74,W*.92,H*.2);
+    ctx.strokeStyle=C.border;ctx.lineWidth=1;ctx.strokeRect(W*.04,H*.74,W*.92,H*.2);
+    ctx.fillStyle=C.dim;ctx.font='9px Fira Code,monospace';ctx.textAlign='center';
+    ctx.fillText('Empirical: ||μ_sup − μ_unsup||  Pipeline A = 0.448  ·  Pipeline B = 1.318',W*.5,H*.83);
+    ctx.fillStyle=C.gold;ctx.font='8px Fira Code,monospace';
+    ctx.fillText('Pipeline B polluted 3× more — larger Hilbert space amplifies contamination',W*.5,H*.89);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Pollution Bound: Unsupervised Mean State Displaced by ρ·||δ|| from True Normal Centroid',W/2,H*.07);ctx.globalAlpha=1;
+}
+
+// ── SCENE 18: Scaling Argument ───────────────────────────────
+function canvasScaling(ctx,W,H,t){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);drawGrid(ctx,W,H);
+  const rows=[
+    {n:6,dim:64,pairs:15,adv:1.8,label:'Pipeline A',col:C.teal},
+    {n:8,dim:256,pairs:28,adv:4.0,label:'Pipeline B',col:C.purple},
+    {n:10,dim:1024,pairs:45,adv:10.2,label:'Near-term',col:C.gold},
+    {n:12,dim:4096,pairs:66,adv:28.4,label:'Medium-term',col:C.orange},
+    {n:16,dim:65536,pairs:120,adv:256,label:'Future NISQ',col:C.green},
+    {n:20,dim:1048576,pairs:190,adv:2621,label:'Fault tolerant',col:C.rose},
+  ];
+  const nRows=rows.length,rowH=(H*.74)/nRows,startY=H*.13;
+  const maxLogAdv=Math.log10(2621);
+  rows.forEach((r,i)=>{
+    const dr=ease.out3(ease.step(t,i*.1,i*.1+.2));if(dr<.01)return;
+    const y=startY+i*rowH;ctx.globalAlpha=dr;
+    // dim bar
+    const logDim=Math.log2(r.dim)/20;
+    const bw=W*.42*logDim;
+    ctx.fillStyle=r.col+'22';ctx.fillRect(W*.28,y+2,bw,rowH*.7);
+    ctx.strokeStyle=r.col+'66';ctx.lineWidth=1;ctx.strokeRect(W*.28,y+2,bw,rowH*.7);
+    // adv bar
+    const logAdv=Math.log10(Math.max(1,r.adv))/maxLogAdv;
+    const bw2=W*.42*logAdv;
+    ctx.fillStyle=r.adv>10?C.rose+'33':C.dim+'22';ctx.fillRect(W*.54,y+2,bw2,rowH*.7);
+    // Labels
+    ctx.fillStyle=r.col;ctx.font='bold 10px Rajdhani,sans-serif';ctx.textAlign='right';ctx.fillText(`n=${r.n}  (${r.label})`,W*.26,y+rowH*.52);
+    ctx.fillStyle='rgba(192,207,224,.8)';ctx.font='8px Fira Code,monospace';ctx.textAlign='left';
+    ctx.fillText(`${r.dim.toLocaleString()}D`,W*.29,y+rowH*.52);
+    ctx.fillStyle=r.adv>100?C.rose:C.dim;ctx.font='bold 8px Fira Code,monospace';
+    ctx.fillText(`${r.adv.toLocaleString()}×`,W*.55+bw2+4,y+rowH*.52);ctx.globalAlpha=1;
+  });
+  // Column headers
+  const ha=ease.clamp(ease.out3(ease.step(t,0,.15)));ctx.globalAlpha=ha;
+  ctx.fillStyle=C.dim;ctx.font='8px Fira Code,monospace';ctx.textAlign='left';
+  ctx.fillText('Qubit count',W*.04,startY-10);ctx.fillText('Hilbert dims 2ⁿ',W*.29,startY-10);
+  ctx.fillText('Quantum / Classical adv.',W*.54,startY-10);ctx.globalAlpha=1;
+  if(t>.72){
+    const pa=ease.out3(ease.step(t,.72,.95));ctx.globalAlpha=pa;
+    ctx.fillStyle=C.rose;ctx.font='bold 11px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText('At n=20: 1,048,576D — no classical kernel matches without explicit feature engineering',W*.5,H*.93);ctx.globalAlpha=1;
+  }
+  ctx.globalAlpha=ease.clamp(ease.out3(ease.step(t,0,.12)));
+  ctx.fillStyle=C.bright;ctx.font='bold 12px Rajdhani,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Exponential Scaling: 2ⁿ Hilbert dimensions vs O(n²) for classical kernels',W/2,H*.07);ctx.globalAlpha=1;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NARRATIONS
+// ═══════════════════════════════════════════════════════════════
+const NARRATIONS = [
+  // 0 — Title
+  `Welcome to this narrated explainer of Quantum Anomaly Detection in financial transaction networks. We will walk through the complete pipeline — from raw transaction data to confirmed anomaly flags — covering every quantum stage in detail. The pipeline applies three quantum mechanisms: a ZZ feature-map kernel that scores transactions in a Hilbert space of exponential dimension, a quantum autoencoder that tests whether each candidate transaction can survive radical compression, and QAOA — the Quantum Approximate Optimisation Algorithm — which selects the final budget of confirmed anomalies by solving a constrained combinatorial problem. The entire pipeline is fully unsupervised: no fraud labels are consulted at any stage of scoring. Labels are used only for post-hoc evaluation of detection quality.`,
+
+  // 1 — Pipeline Overview
+  `The pipeline reduces one hundred thousand transactions to B confirmed anomaly flags through seven successive stages. Stage one is the raw transaction data: one hundred thousand records with either eight engineered features or twelve raw fields, depending on which pipeline configuration we are running. Stage two scores every transaction using the ZZ quantum kernel, computing a Hilbert-space overlap with the population mean state. Stage three pre-screens to the top fifty: ninety-nine thousand nine hundred and fifty transactions are eliminated in a single quantum scoring pass. Stage four applies the quantum autoencoder to the fifty survivors, testing each for structural incompressibility. Stage five fuses the kernel and autoencoder scores with weights fifty-five and forty-five percent. Stage six feeds the top fourteen candidates into QAOA, which selects the final budget. Stage seven produces an anomaly fingerprint for each confirmed flag — a radar chart of feature-level z-scores that explains which risk dimensions drove the alert.`,
+
+  // 2 — Synthetic Data
+  `The synthetic transaction population is constructed in two stages. The normal population draws one hundred thousand transactions from a five-component Gaussian mixture in the unit cube. Each component represents a distinct cardholder segment. Segment zero is retail — thirty-three percent of the population — with moderate amounts, standard business hours, and essentially no cross-border activity. Segment one is e-commerce: higher amounts, later hours, and more varied merchants. Segment two is the high-value segment — large amounts, significant cross-border exposure, and premium devices. Segment three is the frequent-low segment: many small transactions, high velocity, and wide hour distribution. These cardholders are the primary source of false positives for a velocity rule engine. Segment four is inactive cardholders: rare, small, predictable, and easy to score as normal. All five components use diagonal covariance, reflecting the assumption that features are drawn independently within each behavioural segment.`,
+
+  // 3 — Fraud Archetypes
+  `Six fraud archetypes are injected into the normal population by overwriting specific feature coordinates of disjoint randomly selected subsets. Archetype one, the high-value cross-border takeover, represents a compromised card used abroad for a large purchase at an unusual merchant immediately after the takeover. It is expressed as simultaneous extremes on location deviation, device change, very low merchant entropy, high cross-border flag, and high log-amount. Archetype two is velocity card-testing: many small transactions in rapid succession to verify stolen card numbers. Archetype three is a night high-value device change — account access at approximately midnight from a new device for a large purchase. Archetype four is a merchant-category outlier: a card used at a cryptocurrency exchange or luxury merchant it has never visited. Archetype five is a large cross-border transaction with slightly elevated velocity. Archetype six is small-amount probing: micro-transactions to test card validity below decline thresholds. All six subsets are disjoint by construction — no transaction is assigned to more than one archetype — giving approximately seven hundred and twenty fraud transactions at a nominal prevalence of zero point seven percent.`,
+
+  // 4 — ZZ Encoding Overview
+  `The ZZ feature map converts each transaction's feature vector in the unit cube into a quantum state in a Hilbert space of dimension two to the n, where n is the number of qubits. The encoding has four steps. First, each feature value is rescaled from the unit interval to zero to pi radians. Second, all n qubits are initialised to the computational ground state. Third, the Hadamard transform places all n qubits in a uniform superposition, creating equal amplitude on all two to the n basis states simultaneously. Fourth, a sequence of single-qubit Z rotations and two-qubit ZZ entangling gates imprints the transaction's feature values as phase shifts on the amplitudes. After this circuit, the state encodes all d features and all d-choose-two pairwise feature interactions simultaneously — in a single quantum state whose amplitude pattern uniquely characterises the transaction. For Pipeline A with six qubits, the Hilbert space is sixty-four dimensional. For Pipeline B with eight qubits, it is two hundred and fifty-six dimensional.`,
+
+  // 5 — Hadamard
+  `The Hadamard transform is the first quantum operation applied after initialisation. The single-qubit Hadamard gate maps the ground state to the equal superposition of zero and one, placing the qubit's state on the equator of the Bloch sphere. Applied simultaneously to all n qubits, it creates the tensor product of n such superpositions. For n equals six, the result is one divided by the square root of sixty-four, times the sum over all sixty-four computational basis states. Every possible binary pattern of n bits coexists in the state simultaneously, each with equal amplitude one over the square root of two to the n. This is the crucial starting point: no transaction information has been encoded yet, so all two to the n hypotheses about which feature interaction patterns are present are equally plausible. The subsequent Z-rotation and ZZ gates selectively rotate the phases of these amplitudes to encode the transaction's specific feature values, while preserving the uniform amplitude magnitude. This separation between phase and magnitude is what allows the quantum kernel to detect anomalies through interference rather than distance.`,
+
+  // 6 — ZZ Coupling
+  `The ZZ entangling gate couples pairs of qubits by a data-dependent angle theta-qr equals pi minus phi-q times pi minus phi-r, where phi-q and phi-r are the angular encodings of features q and r respectively. This formula is best understood geometrically: theta-qr is the area of the rectangle formed by the residual phase segments pi minus phi-q and pi minus phi-r. Three properties make this coupling ideal for fraud detection. First, it is maximised when both features are near their population minimum — that is, when both features simultaneously take anomalous low values. For example, a probing transaction with very low amount and very low merchant entropy produces a coupling angle near pi squared, the maximum. Second, it vanishes when either feature is at its maximum, preventing any single extreme feature from dominating the cross-feature landscape. Third, it is data-adaptive: unlike the fixed Gaussian or polynomial kernels, the coupling strength between every pair of features changes for every transaction, allowing the kernel to be implicitly sensitive to the specific combination regime of each fraud archetype. After all n-choose-two ZZ gates are applied, the total phase accumulated at each basis state encodes both the individual feature values and all their pairwise interactions simultaneously.`,
+
+  // 7 — Interference
+  `The kernel anomaly score measures quantum wave interference between a transaction's encoded state and the population mean state. The score is one minus the modulus squared of the inner product between the mean state and the transaction's state. This inner product is a sum of two-to-the-n complex phasors — one for each basis state — each weighted by the corresponding component of the mean state. For a normal transaction, the phase differences between the transaction's state and the mean state are small for the high-weight basis states. The phasors all point in similar directions and their vector sum has a large modulus. This is constructive interference: the transaction looks like the population mean and receives a score near zero. For an anomalous transaction, the phase differences are large and irregular across many basis states, because its unusual combination of features produces a phase pattern that is geometrically incoherent with the mean. The phasors point in wildly different directions and their sum's modulus is small. This is destructive interference: the transaction is geometrically distant from the normal population in Hilbert space and receives a score near one. The physics of wave cancellation is itself the detection mechanism — not a distance metric applied on top of features.`,
+
+  // 8 — Mean State & Scoring
+  `The population mean state is the quantum analogue of a reference template for normal behaviour. It is constructed by drawing a random reference sample of three thousand transactions from the full population, computing the quantum state of each, averaging the resulting vectors, and normalising the result. The k-th component of the mean state is the average phasor at basis state k: a complex number whose magnitude indicates how consistently the normal population produces the interaction pattern represented by that basis state, and whose argument indicates the dominant phase direction for that pattern. In the unsupervised construction, the reference sample contains approximately ten to twenty fraud transactions that contaminate the mean state by pulling it slightly away from the pure normal centroid. In the supervised construction, the reference is drawn exclusively from confirmed-normal transactions, giving a cleaner reference and typically higher separation. The kernel score for each transaction is computed as one minus the squared modulus of the overlap with the mean state, then normalised min-max across the full population. The total computational cost is order N times two to the n — approximately six-and-a-half million operations for Pipeline A.`,
+
+  // 9 — Pre-screening
+  `The pre-screening step implements the first massive reduction in the transaction population. All one hundred thousand transactions have been scored by the ZZ kernel. Their scores are sorted in descending order and the top fifty are retained. This eliminates ninety-nine thousand nine hundred and fifty transactions in a single step — a two-thousand-fold reduction. The cut is not heuristic: each eliminated transaction was tested against the Hilbert-space population mean and found to interfere constructively, indicating structural alignment with normal behaviour. The fifty survivors are those whose phase pattern is most geometrically incoherent with the mean state across all two-to-the-n simultaneously evaluated feature interaction dimensions. In operational terms, this corresponds to the first automated decision layer in a real-time payments environment: the quantum kernel immediately clears essentially all transactions as normal without any human involvement, forwarding only the fifty most geometrically unusual ones to the more expensive autoencoder and QAOA stages. The quantum advantage at this stage is precisely the ability to evaluate all pairwise feature interactions simultaneously without explicitly enumerating them — for n equals eight, twenty-eight pairwise interactions per transaction in O-of-n-squared circuit depth.`,
+
+  // 10 — Quantum Autoencoder
+  `The quantum autoencoder adds an orthogonal anomaly criterion to the kernel score: structural incompressibility. In the full quantum autoencoder circuit, a parameterised unitary maps an input quantum state to a smaller latent register and a discarded trash subsystem. The compression is faithful if and only if the trash register is in a product state, which happens precisely when the input state lies within the normal-population subspace the circuit was designed to compress. Our implementation approximates this with PCA using three principal components. The standardised candidate features are projected onto the three dominant eigenvectors of the population covariance matrix and then reconstructed. The reconstruction error — the squared norm of the discarded residual divided by the total signal energy — is the autoencoder score. By the trash-register identity lemma, this error equals the squared projection of the candidate's feature vector onto the directions the normal population does not produce. A transaction with high reconstruction error has anomalous information in the trash register — structure that the three dominant variation modes of the normal population cannot explain. For Pipeline A with eight features, the trash register is five-dimensional. For Pipeline B with twelve features, it is nine-dimensional, giving more capacity to detect unusual raw-field combinations.`,
+
+  // 11 — Score Fusion
+  `The kernel score and autoencoder score capture orthogonal signals and their empirical correlation on the fifty candidates is typically between thirty and fifty percent — positively correlated but not redundant. The kernel score fires most strongly on multi-feature co-occurrence anomalies: sleeper activations, cross-border device changes, and velocity attacks that simultaneously involve many features at unusual levels. The autoencoder fires most strongly on single-feature extremes that are incompressible — transactions whose standardised feature profile has significant components in the directions the normal population's covariance matrix assigns near-zero variance. The fused score is zero-point-five-five times the kernel score plus zero-point-four-five times the autoencoder score. The slight overweighting of the kernel reflects that it operates in the richer two-to-the-n-dimensional Hilbert space and provides broader coverage. The top fourteen candidates by fused score are forwarded to QAOA. Requiring elevation of both scores before forwarding a transaction to QAOA implements a two-gate architecture: a transaction with high kernel score but low autoencoder score may be geometrically unusual without being structurally inexplicable, reducing false positives before any human analyst is involved.`,
+
+  // 12 — QAOA QUBO
+  `The QAOA stage formulates anomaly selection as a constrained combinatorial optimisation problem over the fourteen top-scoring candidates. We introduce binary decision variables x-i equal to one if candidate i is confirmed as an anomaly. The adaptive budget B is determined from the interquartile range of the fused scores: we count candidates whose combined score exceeds the twenty-fifth percentile plus fifty-five percent of the score range, clipped to between three and eleven. The QAOA objective has three terms. First, a score reward: minus the sum of individual combined scores times x-i. Second, a cardinality penalty: lambda times the sum of all x-i minus B, squared, which enforces the budget constraint. Third, an anti-clustering term: lambda over two times the sum over all pairs of x-i times x-j, which prevents the selection from concentrating entirely in one region of the score distribution. Expanding using the binary identity x-i squared equals x-i and collecting terms, the objective becomes a sum of bilinear terms: the bias h-i equals minus half the combined score plus a budget correction term, and the coupling J-i-j equals lambda over two for all pairs. Unlike the portfolio QUBO, all couplings are uniform — the selection problem does not require diversification across anomaly archetypes, only cardinality enforcement.`,
+
+  // 13 — QAOA Circuit
+  `The QAOA circuit alternates between a phase separator and a mixing layer, repeated for p equals three layers. The initial state is the uniform superposition over all two-to-the-fourteen — sixteen thousand three hundred and eighty-four — possible anomaly-flag configurations. Every possible selection is represented simultaneously with equal amplitude. The phase separator applies the cost Hamiltonian by multiplying each basis state's amplitude by e to the minus i gamma times the energy of that configuration. Low-energy configurations — those that flag high-scoring candidates within budget — accumulate less phase shift; high-energy ones accumulate more. After multiple layers, amplitude concentrates on low-energy configurations through constructive interference. The mixing layer is a product of single-qubit X rotations applied to each candidate independently. Its effect on the state is to create superpositions between configurations that differ by a single anomaly flag. This is quantum tunnelling: amplitude passes through the energy barriers separating locally good but globally suboptimal selections. The optimal QAOA parameters are found by the parameter-shift rule: the gradient of the expected energy with respect to each parameter equals half the difference of energy evaluations at the parameter plus or minus pi over two. This rule is exact — not a finite-difference approximation — because each QAOA gate is generated by a Pauli operator. The optimisation runs three independent restarts with fourteen gradient steps each, using an exponentially decaying learning rate.`,
+
+  // 14 — Energy Landscape
+  `The QAOA energy landscape visualises the combinatorial search problem. Each point on the horizontal axis represents a different choice of QAOA parameter gamma, and the height represents the expected QUBO energy — the quality of the anomaly selection that QAOA would produce at that parameter value. The landscape contains multiple local minima, corresponding to locally coherent but globally suboptimal anomaly selections. A classical gradient descent algorithm starting in the left region of the landscape is trapped in the nearest local minimum and cannot escape without explicit random restarts. The QAOA circuit, by contrast, maintains a probability cloud over the entire sixteen-thousand-dimensional configuration space simultaneously. The phase separator shifts phase on all sixteen thousand configurations at once; the mixer spreads amplitude between neighbouring configurations via quantum superposition. This allows amplitude to concentrate near the global minimum even if that minimum is separated from the initial starting point by several local minima. The marginal probability p-i — the fraction of the optimised QAOA state's probability mass that places candidate i in the confirmed set — provides an ensemble consensus measure. A candidate with marginal probability above eighty-five percent is confirmed with high ensemble agreement. A candidate with probability near fifty percent is genuinely borderline and merits human review.`,
+
+  // 15 — Fingerprint
+  `For each confirmed anomaly, the pipeline generates a feature-level explanation as an eight-axis radar chart. Three quantities are computed per feature. The population z-score answers: how unusual is this feature value relative to the full population of one hundred thousand transactions? The per-feature reconstruction error answers: which feature was most responsible for this candidate failing the autoencoder compression? The combined importance score averages the absolute z-score and the reconstruction error. The top three features by combined importance are reported as primary anomaly drivers. The radar chart polygon visually identifies the fraud archetype without any labelling. A spike on the velocity and device-change axes with a deep indent on merchant entropy identifies a velocity attack. A spike simultaneously on location deviation, device change, cross-border, and log-amount with a near-zero value on hour identifies a nighttime cross-border takeover. Each polygon shape directly corresponds to an operational fraud archetype, giving the investigating analyst an immediate prioritisation framework. The fingerprint is the output layer that bridges the quantum-computed Hilbert-space geometry and the human-readable compliance workflow — translating phase incoherence in a two-hundred-and-fifty-six-dimensional space into an actionable case note.`,
+
+  // 16 — Supervised vs Unsupervised
+  `The most important research question in the pipeline concerns the construction of the population mean state. In the fully unsupervised construction, the reference sample is drawn uniformly from the full transaction population, which contains approximately zero-point-three-five percent fraudulent transactions. In the supervised construction, the reference is drawn exclusively from confirmed-normal transactions. The difference between these two constructions is exactly rho times the Hilbert-space displacement between the fraud and normal centroids. At a reference size of three thousand, approximately ten to twenty fraud samples contaminate the unsupervised mean state, pulling it slightly away from the true normal centroid and reducing the separation between normal and anomalous score distributions. The four-way comparison experiment runs both mean-state constructions crossed with both feature regimes — engineered features and raw fields — producing cells U-A, S-A, U-B, and S-B. Gap one measures the value of confirmed-normal labels in the engineered regime: the AUC difference between S-A and U-A. Gap two measures the same in the raw-field regime. Gap three measures the pure Hilbert-space effect: how much AUC Pipeline B gains over Pipeline A when both are unsupervised. Gap four — the cold-start gap — measures whether the unsupervised raw-field pipeline can match the supervised engineered pipeline. If this gap closes as n grows, it demonstrates that the exponential Hilbert-space enrichment compensates for the absence of both labels and domain knowledge simultaneously — establishing the key quantum advantage claim.`,
+
+  // 17 — Pollution Bound
+  `The pollution bound lemma provides a precise quantitative statement of how much the unsupervised mean state differs from the supervised one. The expected displacement between the two mean states equals rho times the Hilbert-space distance between the fraud centroid and the normal centroid. This result follows immediately from the linearity of the mixture distribution expectation. In our experiment, the measured Hilbert-space distance between the supervised and unsupervised mean states is zero-point-four-five for Pipeline A and one-point-three-two for Pipeline B. The much larger displacement for Pipeline B reflects the three-fold greater contamination effect in the two-hundred-and-fifty-six-dimensional Hilbert space: the same ten fraud samples displace the mean state further in a larger space because their phase patterns are more diverse relative to the normal population in that richer geometry. This empirically confirms the pollution bound and explains why Gap two — the label value for Pipeline B — is so much larger than Gap one. It also motivates the central hypothesis of this research: there exists a qubit count n-star of rho at which the unsupervised pipeline in the larger Hilbert space matches the supervised pipeline at the reference qubit count. Establishing n-star empirically for realistic payment data and theoretically under assumptions on the feature distributions is the primary open research question.`,
+
+  // 18 — Scaling
+  `The quantum advantage claim of the pipeline rests fundamentally on the exponential scaling of the Hilbert space. At n equals six for Pipeline A, the ZZ kernel evaluates sixty-four interaction dimensions from eight features. At n equals eight for Pipeline B, it evaluates two hundred and fifty-six dimensions from twelve features. At n equals ten, which is accessible on current IBM quantum processors, the kernel evaluates over one thousand dimensions. At n equals twelve, four thousand and ninety-six. At n equals sixteen, sixty-five thousand five hundred and thirty-six. At n equals twenty, over one million dimensions simultaneously. A classical degree-two polynomial kernel on n features evaluates only n-squared interaction dimensions — four hundred at n equals twenty. The quantum kernel thus evaluates more than two thousand six hundred times as many interaction dimensions at n equals twenty without any additional circuit depth beyond O-of-n-squared gates. This exponential advantage means that at a qubit count accessible on current NISQ hardware, the raw-field pipeline can discover fraud-relevant interaction patterns across millions of feature dimension combinations without a single domain expert specifying which combinations to look for. A fraudster who learns that the bank's detector is sensitive to velocity crossed with merchant entropy will adapt. A detector operating across more than a million interaction dimensions simultaneously cannot be evaded by targeting specific features the engineer has not yet encoded. This is the central fraud-detection argument for quantum advantage: not faster computation, but richer, automated feature interaction discovery at a scale no classical kernel can match.`
+];
+
+// ═══════════════════════════════════════════════════════════════
+// SCENE DEFINITIONS
+// ═══════════════════════════════════════════════════════════════
+const SCENES = [
+  {id:0,stage:0,stageName:'Intro',title:'Quantum Anomaly Detection',subtitle:'ZZ Kernel · QAE · QAOA — Full Pipeline',
+   eqs:[],canvasRender:canvasTitle,
+   interp:`<p>This explainer walks through the complete QAD pipeline — every algebraic step from raw transactions to confirmed anomaly flags.</p><p><strong>Three quantum mechanisms:</strong> ZZ kernel scoring in exponential Hilbert space, quantum autoencoder compression fidelity, and QAOA combinatorial selection.</p><div class="insight lit">Fully unsupervised: no fraud labels are consulted at any scoring stage. Labels are used only for post-hoc AUC evaluation.</div>`},
+
+  {id:1,stage:0,stageName:'Intro',title:'The Seven-Stage Pipeline',subtitle:'100,000 transactions → B confirmed anomalies',
+   eqs:[{latex:'\\mathbf{x}\\in[0,1]^d\\xrightarrow{\\text{ZZ}}|\\psi\\rangle\\in\\mathbb{C}^{2^n}\\xrightarrow{S_K}\\mathcal{C}_{50}\\xrightarrow{\\text{QAE}}S_A\\xrightarrow{\\text{QAOA}}\\mathcal{F}_B',label:'Pipeline'}],
+   canvasRender:canvasPipeline,
+   interp:`<p>Seven stages reduce 100,000 transactions to B confirmed anomaly flags.</p>
+   <p><span class="tag zz">ZZ Kernel</span> Scores all 100K in Hilbert space · eliminates 99,950</p>
+   <p><span class="tag qae">QAE</span> Tests compressibility of 50 survivors · adds orthogonal score</p>
+   <p><span class="tag qaoa">QAOA</span> Solves combinatorial selection on 14 top candidates</p>
+   <div class="insight lit">Each stage adds an independent quantum criterion. Requiring elevation of all three drastically reduces false positives.</div>`},
+
+  {id:2,stage:1,stageName:'Data',title:'Synthetic Transaction Population',subtitle:'5-Segment Gaussian Mixture · N = 100,000',
+   eqs:[{latex:'\\mathbf{x}_i\\sim\\sum_{s=0}^4\\pi_s\\,\\mathcal{N}(\\boldsymbol{\\mu}_s,\\Sigma_s),\\;\\pi=(0.33,0.22,0.17,0.17,0.11)',label:'Mixture'},
+        {latex:'\\mathbf{x}_i\\leftarrow\\mathrm{clip}(\\mathbf{x}_i,0,1)',label:'Normalise'}],
+   canvasRender:canvasData,
+   interp:`<p>The normal population is a five-component Gaussian mixture representing distinct cardholder segments. Each component uses <em>diagonal covariance</em> — features are drawn independently within segments.</p>
+   <p><strong>Segment 0 (Retail, 33%):</strong> moderate amounts, standard hours, domestic. <strong>Segment 3 (Frequent-low, 17%):</strong> high velocity, small amounts — the primary source of false positives for velocity rules.</p>
+   <div class="insight lit">All features are min-max normalised to [0,1]. The 6 fraud archetypes are injected post-normalisation into disjoint transaction subsets.</div>`},
+
+  {id:3,stage:1,stageName:'Data',title:'Six Fraud Archetypes',subtitle:'Disjoint injection · ρ_nom ≈ 0.70%',
+   eqs:[{latex:'\\rho_k\\in\\{0.18\\%,0.15\\%,0.12\\%,0.10\\%,0.10\\%,0.07\\%\\}',label:'Rates'},
+        {latex:'N_1=\\sum_k\\lfloor N\\cdot\\rho_k\\rfloor\\approx720,\\;\\ell_i=1\\;\\text{for overwritten }i',label:'Labels'}],
+   canvasRender:canvasFraud,
+   interp:`<p>Each archetype overwrites specific features with uniform samples from anomalous ranges. Archetypes are <strong>disjoint by construction</strong>: no transaction appears in more than one archetype.</p>
+   <p><strong>Key design:</strong> the injection ranges push features to opposing extremes simultaneously, maximising ZZ coupling sensitivity. Archetype 6 (probing) combines very low amount with elevated velocity — exactly the low × high combination the ZZ coupling formula amplifies most.</p>
+   <div class="insight lit">Labels are <em>never</em> used during scoring. They enable post-hoc AUC and precision evaluation only.</div>`},
+
+  {id:4,stage:2,stageName:'ZZ Kernel',title:'ZZ Feature Map: Overview',subtitle:'Stage 0→1 — x ∈ [0,1]ᵈ → |ψ(x)⟩ ∈ ℂ^{2ⁿ}',
+   eqs:[{latex:'|\\psi(\\mathbf{x})\\rangle=U_\\varphi(\\mathbf{x})\\,H^{\\otimes n}|0\\rangle^{\\otimes n}\\in\\mathbb{C}^{2^n}',label:'Def.'},
+        {latex:'\\dim\\mathcal{H}=2^n:\\;n{=}6\\to64,\\;n{=}8\\to256',label:'Dimensions'}],
+   canvasRender:canvasZZOverview,
+   interp:`<p>The ZZ feature map encodes <em>d</em> features into a <strong>2ⁿ-dimensional complex Hilbert space</strong>, simultaneously representing all pairwise feature interactions within a single quantum state.</p>
+   <p>The circuit has three parts: Hadamard superposition (all 2ⁿ basis states activated), R_z rotations (single-feature encoding), and ZZ entangling gates (cross-feature coupling).</p>
+   <div class="insight lit">Critical property: O(n²) circuit depth encodes what would cost O(2ⁿ) storage classically. For n=8: 256D interaction space from 28 gate pairs.</div>`},
+
+  {id:5,stage:2,stageName:'ZZ Kernel',title:'Hadamard Superposition',subtitle:'Stage 1: H⊗ⁿ|0⟩⊗ⁿ — Equal priors',
+   eqs:[{latex:'H^{\\otimes n}|0\\rangle^{\\otimes n}=\\frac{1}{\\sqrt{2^n}}\\sum_{k=0}^{2^n-1}|k\\rangle',label:'Eq.(13)'},
+        {latex:'|{\\langle k|\\Psi_1\\rangle}|^2=\\frac{1}{2^n}\\;\\forall\\;k',label:'Uniform'}],
+   canvasRender:canvasHadamard,
+   interp:`<p>The Hadamard transform creates a uniform superposition over all 2ⁿ computational basis states. For n=6, all 64 binary interaction patterns coexist with equal amplitude 1/√64.</p>
+   <p>At this stage, no transaction information has been encoded yet. All hypotheses about which feature combination patterns are present are equally plausible — an exact flat prior over all 2ⁿ interaction signatures.</p>
+   <div class="insight lit">The subsequent ZZ gates encode fraud signals as <em>phase rotations</em>, not amplitude changes. The binary tree shows how 1 qubit branches to 2ⁿ simultaneous states.</div>`},
+
+  {id:6,stage:2,stageName:'ZZ Kernel',title:'ZZ Entangling Gates & Phase Encoding',subtitle:'Stage 3: Total phase Φ_k(x)',
+   eqs:[{latex:'\\Phi_k(\\mathbf{x})=\\sum_q\\varphi_q s_q^{(k)}+\\sum_{q<r}(\\pi-\\varphi_q)(\\pi-\\varphi_r)s_q^{(k)}s_r^{(k)}',label:'Eq.(20)'},
+        {latex:'\\theta_{qr}=(\\pi-\\varphi_q)(\\pi-\\varphi_r)\\;\\text{[ZZ coupling]}',label:'Eq.(17)'}],
+   canvasRender:canvasZZcoupling,
+   interp:`<p>The ZZ coupling angle θ_{qr} = (π−φ_q)(π−φ_r) is the area of the rectangle formed by the two residual phase segments. This is <strong>maximised when both features are near their population minimum</strong> — exactly the regime of probing fraud and unusual co-occurrences.</p>
+   <p>Unlike RBF or polynomial kernels, the coupling is <em>data-adaptive</em>: it changes for every transaction. A high-velocity transaction at an unusual merchant produces a large coupling; a high-value transaction alone does not.</p>
+   <div class="insight lit">After all ⁿC₂ ZZ gates, the state |ψ(x)⟩ encodes the entire 2ⁿ-dimensional phase pattern — all feature interactions evaluated simultaneously.</div>`},
+
+  {id:7,stage:3,stageName:'Scoring',title:'Quantum Kernel Interference',subtitle:'S_K(x) = 1 − |⟨μ_φ|ψ(x)⟩|²',
+   eqs:[{latex:'S_K(\\mathbf{x})=1-|\\langle\\mu_\\phi|\\psi(\\mathbf{x})\\rangle|^2=1-\\left|\\frac{1}{2^n}\\sum_k e^{i(\\Phi_k(\\mathbf{x})-\\arg\\mu_\\phi[k])}\\right|^2',label:'Eq.(27–28)'}],
+   canvasRender:canvasInterference,
+   interp:`<p>The kernel score is a measurement of <strong>quantum wave interference</strong>. The inner product ⟨μ_φ|ψ(x)⟩ is a coherent sum of 2ⁿ phasors.</p>
+   <p><strong>Normal transaction:</strong> phase differences are small for high-weight basis states → phasors align → constructive interference → high overlap → S_K ≈ 0. <strong>Anomalous transaction:</strong> large, irregular phase differences → destructive interference → near-zero overlap → S_K ≈ 1.</p>
+   <div class="insight lit">No classical kernel uses interference as its detection principle. This is structurally different from both RBF (Euclidean distance) and polynomial (fixed algebraic form) kernels.</div>`},
+
+  {id:8,stage:3,stageName:'Scoring',title:'Population Mean State & Scoring',subtitle:'|μ_φ⟩ = normalise(1/M·Σ|ψ(xᵢ)⟩)',
+   eqs:[{latex:'|\\mu_\\phi\\rangle=\\frac{\\tilde{\\boldsymbol{\\mu}}_\\phi}{\\|\\tilde{\\boldsymbol{\\mu}}_\\phi\\|},\\quad\\tilde{\\boldsymbol{\\mu}}_\\phi=\\frac{1}{M_{\\rm ref}}\\sum_{i\\in\\mathcal{R}}|\\psi(\\mathbf{x}_i)\\rangle',label:'Eq.(24)'},
+        {latex:'\\mu_\\phi[k]=\\frac{1}{M_{\\rm ref}\\sqrt{2^n}}\\sum_{i\\in\\mathcal{R}}e^{i\\Phi_k(\\mathbf{x}_i)}',label:'k-th component'}],
+   canvasRender:canvasMeanState,
+   interp:`<p>The mean state |μ_φ⟩ is the quantum-mechanical representation of "what a normal transaction looks like" — a coherent average of M=3,000 reference transaction states in Hilbert space.</p>
+   <p>Its k-th component is the average phasor at basis state k: large magnitude means the normal population consistently produces that interaction pattern; small means it rarely does.</p>
+   <div class="insight lit">Construction cost: O(M·2ⁿ), computed once. Scoring all N=100K transactions: O(N·2ⁿ). Pipeline A: ~1.0s. Pipeline B: ~6s on a laptop CPU.</div>`},
+
+  {id:9,stage:3,stageName:'Scoring',title:'Pre-Screening: Top-50',subtitle:'99,950 transactions eliminated',
+   eqs:[{latex:'\\mathcal{C}_{50}=\\{t_{\\sigma(1)},\\ldots,t_{\\sigma(50)}\\},\\quad\\sigma=\\mathrm{rank}_{\\downarrow}(S_K)',label:'Eq.(35)'},
+        {latex:'\\text{Threshold: }\\mathrm{Pct}_{99.95}(S_K)',label:'99.95th pct'}],
+   canvasRender:canvasPrescreen,
+   interp:`<p>After scoring all 100,000 transactions, we retain the top 50 by kernel score. <strong>99,950 transactions are cleared</strong> in a single quantum scoring pass.</p>
+   <p>The cut is not heuristic: each eliminated transaction was tested against the 2ⁿ-dimensional mean state and found to interfere constructively — it is structurally consistent with normal behaviour across all evaluated interaction dimensions.</p>
+   <div class="insight lit">The 2000× reduction means the expensive autoencoder and QAOA stages run on only 50 candidates — making the combined pipeline computationally tractable at scale.</div>`},
+
+  {id:10,stage:4,stageName:'QAE',title:'The Quantum Autoencoder',subtitle:'8D → 3D → 8D · Trash-register identity',
+   eqs:[{latex:'S_A(\\mathbf{x}_i)=\\frac{\\|\\tilde{\\mathbf{x}}_i-\\hat{\\tilde{\\mathbf{x}}}_i\\|_2^2}{\\|\\tilde{\\mathbf{x}}_i\\|_2^2},\\quad\\hat{\\tilde{\\mathbf{x}}}_i=\\tilde{\\mathbf{x}}_i VV^\\top',label:'Eq.(39–40)'},
+        {latex:'\\|\\tilde{\\mathbf{x}}_i-\\hat{\\tilde{\\mathbf{x}}}_i\\|^2=\\|\\tilde{\\mathbf{x}}_i V_\\perp\\|^2\\;\\text{(Trash-register identity)}',label:'Lemma 2'}],
+   canvasRender:canvasQAE,
+   interp:`<p>The QAE asks: <em>does this transaction contain structural information the normal population model cannot explain?</em> This is orthogonal to the kernel's geometric distance criterion.</p>
+   <p>The trash-register identity states that reconstruction error equals the <strong>squared projection onto the subspace the normal population does not produce</strong> — the anomalous content the compression could not absorb.</p>
+   <div class="insight lit">Pipeline A: 5 trash dimensions. Pipeline B: 9 trash dimensions — more capacity to capture unusual raw-field combinations at the cost of higher baseline noise.</div>`},
+
+  {id:11,stage:4,stageName:'QAE',title:'Score Fusion',subtitle:'S_C = 0.55·S_K + 0.45·S_A',
+   eqs:[{latex:'S_C(\\mathbf{x}_i)=\\mathrm{normalise}\\bigl(0.55\\cdot S_K+0.45\\cdot S_A\\bigr)',label:'Eq.(47)'},
+        {latex:'\\mathcal{C}_{14}=\\{\\text{top-14 by }S_C\\}',label:'Eq.(49)'}],
+   canvasRender:canvasFusion,
+   interp:`<p>The kernel score S_K and autoencoder score S_A are <strong>complementary by design</strong>. Different fraud archetypes activate them differently:</p>
+   <p><em>Velocity attacks</em> → high S_A (single extreme feature, incompressible) but moderate S_K. <em>Sleeper activations</em> → high S_K (multi-feature co-occurrence, phase incoherent) but moderate S_A.</p>
+   <div class="insight lit">The two-gate architecture requires both scores to be elevated before forwarding to QAOA. This substantially reduces false positives without lowering recall.</div>`},
+
+  {id:12,stage:5,stageName:'QAOA',title:'QAOA: Ising Hamiltonian & Budget',subtitle:'Stage 5→6 — Constrained combinatorial selection',
+   eqs:[{latex:'H_C=\\sum_i h_i Z_i+\\sum_{i<j}J_{ij}Z_iZ_j,\\;h_i=-\\tfrac{S_i}{2}+\\lambda(7-B),\\;J_{ij}=\\tfrac{\\lambda}{2}',label:'Eq.(57–58)'},
+        {latex:'B=\\mathrm{clip}\\!\\left(\\#\\{i:S_C^{(i)}>Q_1+0.55(Q_3-Q_1)\\},3,11\\right)',label:'Eq.(55)'}],
+   canvasRender:canvasQAOAQubo,
+   interp:`<p>QAOA solves a <strong>constrained budget selection problem</strong> — not simple top-B ranking. The Ising Hamiltonian encodes three objectives simultaneously: maximise total anomaly score, enforce cardinality B, and prevent trivial all-B selections via the anti-clustering coupling.</p>
+   <p>The adaptive budget B is set from the IQR of the 14 candidates' scores. On a quiet day: B=3. On a high-alert day: B=10. No fixed historical threshold.</p>
+   <div class="insight lit">J_{ij} = λ/2 is uniform across all pairs — unlike portfolio QUBO where J_{ij} encodes financial covariance. Here, cardinality enforcement is the sole coupling objective.</div>`},
+
+  {id:13,stage:5,stageName:'QAOA',title:'QAOA Circuit: 3 Layers · Parameter-Shift',subtitle:'|ψ(γ,β)⟩ = ∏_ℓ U_B(βₗ)U_C(γₗ)|+⟩⊗14',
+   eqs:[{latex:'|\\boldsymbol{\\psi}(\\boldsymbol{\\gamma},\\boldsymbol{\\beta})\\rangle=\\prod_{\\ell=1}^3 U_B(\\beta_\\ell)\\,U_C(\\gamma_\\ell)\\,|\\mathbf{+}\\rangle^{\\otimes 14}',label:'Eq.(60)'},
+        {latex:'\\frac{\\partial F}{\\partial\\theta_\\ell}=\\tfrac{1}{2}\\!\\left[F\\!\\left(\\theta_\\ell+\\tfrac{\\pi}{2}\\right)-F\\!\\left(\\theta_\\ell-\\tfrac{\\pi}{2}\\right)\\right]',label:'Param-shift'}],
+   canvasRender:canvasQAOACircuit,
+   interp:`<p>The QAOA circuit alternates between the phase separator U_C (encodes QUBO scores as phases) and the mixer U_B (creates superpositions between selections differing by one flag). After p=3 layers, amplitude concentrates on low-energy configurations.</p>
+   <p>The <strong>parameter-shift rule</strong> provides the exact gradient — not a finite-difference approximation — because each gate is generated by a Pauli operator. Total: 507 circuit evaluations per run.</p>
+   <div class="insight lit">Marginal probability pᵢ = fraction of the optimised probability cloud that places candidate i in the confirmed set. An ensemble consensus over 16,384 configurations simultaneously.</div>`},
+
+  {id:14,stage:5,stageName:'QAOA',title:'Quantum Tunnelling vs Classical Trapping',subtitle:'Energy landscape — superposition enables global search',
+   eqs:[{latex:'F(\\boldsymbol{\\gamma},\\boldsymbol{\\beta})=\\langle\\boldsymbol{\\psi}|H_C|\\boldsymbol{\\psi}\\rangle=\\sum_{k=0}^{2^{14}-1}E(k)|\\psi[k]|^2',label:'Eq.(64)'},
+        {latex:'p_i=\\sum_{k:\\,\\mathrm{bit}_i(k)=1}|\\psi^*[k]|^2\\quad\\text{(marginal prob)}',label:'Eq.(68)'}],
+   canvasRender:canvasQAOAEnergy,
+   interp:`<p>Classical gradient descent on the energy landscape gets trapped in the nearest local minimum. QAOA maintains a <strong>probability cloud over all 2¹⁴ = 16,384 configurations</strong> simultaneously, allowing amplitude to concentrate near the global minimum regardless of local barriers.</p>
+   <p>The final B confirmed anomalies are the candidates with the highest marginal probabilities — an ensemble consensus that is richer than any single deterministic selection.</p>
+   <div class="insight lit">A marginal probability near 0.50 signals a genuinely borderline candidate — QAOA has found two near-equally-good selections with and without that candidate. This triggers human review rather than automatic confirmation.</div>`},
+
+  {id:15,stage:5,stageName:'QAOA',title:'Anomaly Fingerprinting',subtitle:'Per-feature z-scores · Radar chart · Archetype identification',
+   eqs:[{latex:'c_j(i)=0.5|z_j(i)|+0.5\\,\\varepsilon_j(i),\\;z_j(i)=\\frac{\\tilde{x}_{ij}-\\hat{\\mu}_j}{\\hat{\\sigma}_j}',label:'Eq.(70–72)'},
+        {latex:'\\varepsilon_j(i)=|\\tilde{x}_{ij}-\\hat{\\tilde{x}}_{ij}|',label:'per-feature recon. error'}],
+   canvasRender:canvasFingerprint,
+   interp:`<p>For each confirmed anomaly, three quantities identify the primary anomaly drivers. The <em>z-score</em> measures statistical extremity relative to the full population. The <em>per-feature reconstruction error</em> identifies which features drove the QAE alert. The <em>combined importance</em> synthesises both.</p>
+   <p>The radar chart polygon <strong>identifies the fraud archetype without any labelling</strong>: a spike on loc_dev and dev_chg with low hour identifies a nighttime device-change takeover immediately.</p>
+   <div class="insight lit">This is the quantum-to-human translation layer: phase incoherence in a 256D Hilbert space becomes an actionable compliance case note with three highlighted risk dimensions.</div>`},
+
+  {id:16,stage:6,stageName:'Research',title:'Supervised vs Unsupervised Reference State',subtitle:'The central research question',
+   eqs:[{latex:'|\\mu_\\phi^{\\rm sup}\\rangle=\\mathrm{norm}\\!\\left(\\frac{1}{M}\\sum_{i\\in\\mathcal{R}_0}|\\psi(\\mathbf{x}_i)\\rangle\\right),\\;\\mathcal{R}_0\\subset\\mathcal{T}_0',label:'Eq.(mu_sup)'},
+        {latex:'\\mathrm{AUC}(|\\mu^{\\rm unsup}\\rangle,n)\\geq\\mathrm{AUC}(|\\mu^{\\rm sup}\\rangle,n^*(\\rho))\\;\\text{for }n\\geq n^*(\\rho)',label:'Hypothesis'}],
+   canvasRender:canvasSupVsUnsup,
+   interp:`<p>The four-way comparison crosses <em>mean-state construction</em> (supervised vs unsupervised) with <em>feature regime</em> (engineered vs raw), giving cells U-A, S-A, U-B, and S-B.</p>
+   <p><span class="tag sup">S,A (AUC 0.752)</span> is the performance ceiling. <span class="tag unsup">U,B (AUC 0.542)</span> is the fully autonomous cold-start scenario — zero labels, zero domain knowledge.</p>
+   <div class="insight lit">Gap 4 = (U,B) − (S,A) measures whether the unsupervised raw-field pipeline can match the supervised engineered one. If this gap closes as n grows, it demonstrates the key quantum advantage claim.</div>`},
+
+  {id:17,stage:6,stageName:'Research',title:'Pollution Bound & n*(ρ)',subtitle:'Lemma 2 · ||μ_sup − μ_unsup|| = ρ·||δ||',
+   eqs:[{latex:'\\left\\|\\mathbb{E}[\\tilde{\\boldsymbol{\\mu}}^{\\rm unsup}]-\\mathbb{E}[\\tilde{\\boldsymbol{\\mu}}^{\\rm sup}]\\right\\|_2=\\rho\\|\\boldsymbol{\\delta}\\|_2',label:'Lemma 2'},
+        {latex:'\\delta=\\mathbb{E}_{P_1}[|\\psi\\rangle]-\\mathbb{E}_{P_0}[|\\psi\\rangle]',label:'Hilbert displacement'}],
+   canvasRender:canvasPollution,
+   interp:`<p>The pollution bound quantifies how much the ~10 fraud samples in the reference contaminate the unsupervised mean state. At ρ=0.0035 and M=3,000, the expected contamination is ~10.5 fraud transactions per reference draw.</p>
+   <p>Empirically: ||μ_sup − μ_unsup|| = <strong>0.448</strong> for Pipeline A and <strong>1.318</strong> for Pipeline B — confirming that the larger 256D space amplifies contamination 3×.</p>
+   <div class="insight lit">n*(ρ) = qubit count where the unsupervised pipeline's AUC matches the supervised one. Establishing this empirically and theoretically is the primary open research question.</div>`},
+
+  {id:18,stage:6,stageName:'Research',title:'Quantum Scaling Advantage',subtitle:'2ⁿ Hilbert dims vs O(n²) classical — n=20: 1M+ dimensions',
+   eqs:[{latex:'\\text{ZZ kernel: }2^n\\text{ dims}\\;\\text{vs classical degree-2: }O(n^2)',label:'Key contrast'},
+        {latex:'n{=}20:\\;2^{20}=1{,}048{,}576\\text{ implicit dims},\\;O(n^2)=400\\text{ for classical}',label:'Factor 2,621×'}],
+   canvasRender:canvasScaling,
+   interp:`<p>The quantum advantage strengthens exponentially with qubit count. At n=20 raw fields, the ZZ kernel implicitly evaluates over one million interaction dimensions — accessible to NISQ hardware at O(n²)=400 gate depth.</p>
+   <p>A fraudster who evades a detector sensitive to velocity × merchant entropy will adapt. A detector operating across one million simultaneous interaction dimensions cannot be selectively evaded — there is no hidden dimension.</p>
+   <div class="insight lit">IBM's 127-qubit processors already support n=20 ZZ circuits. The core research goal: demonstrate empirically that the raw-field quantum pipeline matches the engineered one at a qubit count accessible on current hardware — requiring no domain expert and remaining effective against novel fraud archetypes.</div>`}
+];
+
+// ═══════════════════════════════════════════════════════════════
+// SPEECH ENGINE (identical to reference)
+// ═══════════════════════════════════════════════════════════════
+const Speech={
+  synth:window.speechSynthesis,voices:[],selectedVoice:null,rate:1.0,pitch:1.0,vol:1.0,enabled:true,currentUtter:null,iosResumeTimer:null,
+  init(){const load=()=>{this.voices=this.synth.getVoices();this.populateVoiceSelect();};load();if(this.synth.onvoiceschanged!==undefined)this.synth.onvoiceschanged=load;},
+  populateVoiceSelect(){const sel=document.getElementById('voice-select');sel.innerHTML='';if(!this.voices.length){sel.innerHTML='<option>No voices available</option>';return;}
+    const enV=this.voices.filter(v=>v.lang.startsWith('en')),other=this.voices.filter(v=>!v.lang.startsWith('en'));
+    [...enV,...other].forEach(v=>{const opt=document.createElement('option');opt.value=v.name;opt.textContent=`${v.name} (${v.lang})`;sel.appendChild(opt);});
+    const femaleKw=/zira|susan|hazel|karen|samantha|moira|tessa|fiona|victoria|kate|allison|ava|aria|jenny|clara|natasha|veena|sara|siri|google\sus|google\suk/i;
+    const femaleEn=enV.filter(v=>femaleKw.test(v.name));
+    this.selectedVoice=femaleEn.find(v=>/natural|neural|enhanced|premium/i.test(v.name))||femaleEn[0]||enV[0]||this.voices[0];
+    if(this.selectedVoice)sel.value=this.selectedVoice.name;
+    document.getElementById('voice-badge').textContent=this.selectedVoice?this.selectedVoice.lang.toUpperCase().slice(0,5):'TTS';},
+  setVoice(name){this.selectedVoice=this.voices.find(v=>v.name===name)||this.selectedVoice;document.getElementById('voice-badge').textContent=this.selectedVoice?this.selectedVoice.lang.toUpperCase().slice(0,5):'TTS';},
+  speak(text,onend){if(!this.enabled||!text)return;this.stop();narrationDone=false;
+    const utter=new SpeechSynthesisUtterance(text);
+    if(this.selectedVoice)utter.voice=this.selectedVoice;utter.rate=this.rate;utter.pitch=this.pitch;utter.volume=this.vol;this.currentUtter=utter;
+    const el=document.getElementById('narration-text');el.textContent=text;el.style.transform='translateX(0)';
+    utter.onstart=()=>{document.getElementById('speaking-dot').classList.add('active');this.iosResumeTimer=setInterval(()=>{if(this.synth.paused)this.synth.resume();},12000);};
+    utter.onboundary=(e)=>{if(e.name==='word'){const progress=e.charIndex/text.length;const maxScroll=Math.max(0,el.scrollWidth-el.parentElement.clientWidth);el.style.transform=`translateX(${-progress*maxScroll}px)`;}};
+    utter.onend=()=>{document.getElementById('speaking-dot').classList.remove('active');clearInterval(this.iosResumeTimer);narrationDone=true;if(onend)onend();};
+    utter.onerror=()=>{document.getElementById('speaking-dot').classList.remove('active');clearInterval(this.iosResumeTimer);};
+    this.synth.speak(utter);},
+  stop(){clearInterval(this.iosResumeTimer);this.synth.cancel();document.getElementById('speaking-dot').classList.remove('active');this.currentUtter=null;},
+  pause(){if(this.synth.speaking)this.synth.pause();},
+  resume(){if(this.synth.paused)this.synth.resume();},
+  toggle(){this.enabled=!this.enabled;const btn=document.getElementById('btn-voice');if(this.enabled){btn.classList.add('on');btn.innerHTML='&#128264;';}else{btn.classList.remove('on');btn.innerHTML='&#128263;';this.stop();document.getElementById('narration-text').textContent='(narration off)';}}
+};
+
+// ═══════════════════════════════════════════════════════════════
+// ENGINE
+// ═══════════════════════════════════════════════════════════════
+const canvas=document.getElementById('main-canvas');
+const ctx=canvas.getContext('2d');
+let W,H;
+function resizeCanvas(){const panel=canvas.parentElement;const eqH=document.getElementById('eq-layer').offsetHeight;W=panel.clientWidth;H=Math.max(60,panel.clientHeight-eqH);canvas.width=W;canvas.height=H;}
+
+// Calibrated durations (seconds)
+const SCENE_DURATIONS=[36,32,38,38,36,32,36,34,36,32,36,32,36,38,36,34,36,38,36];
+SCENES.forEach((s,i)=>{s.duration=SCENE_DURATIONS[i]||35;});
+
+let currentScene=0,isPlaying=false,rafId=null,lastTimestamp=0,elapsedInScene=0,iosUnlocked=false,narrationDone=false;
+const TOTAL_DURATION=SCENES.reduce((a,s)=>a+s.duration,0);
+function totalUpTo(idx){let t=0;for(let i=0;i<idx;i++)t+=SCENES[i].duration;return t;}
+
+function showEquations(scene,progress){
+  ['eq0','eq1','eq2'].forEach((id,i)=>{
+    const el=document.getElementById(id);const delay=i*0.18+0.08;
+    if(i<scene.eqs.length&&progress>delay){if(!el.classList.contains('show')){el.innerHTML='';if(scene.eqs[i].label){const lbl=document.createElement('span');lbl.className='eq-label';lbl.textContent=scene.eqs[i].label;el.appendChild(lbl);}const kEl=document.createElement('span');el.appendChild(kEl);renderK(kEl,scene.eqs[i].latex);el.classList.add('show');}}else{el.classList.remove('show');el.innerHTML='';}
+  });
+}
+function updateInfoPanel(scene,idx){
+  document.getElementById('scene-num').textContent=`Scene ${idx+1}/${SCENES.length}  ·  ${scene.stageName}`;
+  document.getElementById('scene-title').textContent=scene.title;
+  document.getElementById('scene-subtitle').textContent=scene.subtitle;
+  document.getElementById('interp-content').innerHTML=scene.interp;
+  setTimeout(()=>document.querySelectorAll('.insight').forEach((el,i)=>setTimeout(()=>el.classList.add('lit'),i*300+500)),150);
+}
+function updateBreadcrumb(stage){document.querySelectorAll('.crumb').forEach(c=>{c.classList.remove('active');if(parseInt(c.dataset.stage)===stage)c.classList.add('active');});}
+function updateProgress(globalT){const pct=(globalT/TOTAL_DURATION)*100;document.getElementById('progress-fill').style.width=pct+'%';const fmt=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;document.getElementById('time-current').textContent=fmt(globalT);document.getElementById('time-total').textContent=fmt(TOTAL_DURATION);}
+function buildMarkers(){const container=document.getElementById('scene-markers');container.innerHTML='';let acc=0;SCENES.forEach((s,i)=>{if(i>0){const mark=document.createElement('div');mark.className='scene-mark';mark.style.left=(acc/TOTAL_DURATION*100)+'%';container.appendChild(mark);}acc+=s.duration;});}
+function updateCountdown(prog,dur){const remaining=(1-prog)*dur;document.getElementById('cr-arc').style.strokeDashoffset=(88*(1-(1-prog))).toFixed(2);document.getElementById('countdown-label').textContent=Math.ceil(remaining)+'s';}
+function goToScene(idx,forcePlay){if(idx<0||idx>=SCENES.length)return;Speech.stop();narrationDone=false;currentScene=idx;elapsedInScene=0;const scene=SCENES[idx];updateInfoPanel(scene,idx);updateBreadcrumb(scene.stage);document.getElementById('scene-counter').textContent=`${idx+1}/${SCENES.length}`;['eq0','eq1','eq2'].forEach(id=>{const el=document.getElementById(id);el.classList.remove('show');el.innerHTML='';});if(Speech.enabled&&(isPlaying||forcePlay)){Speech.speak(NARRATIONS[idx]);}else if(Speech.enabled){document.getElementById('narration-text').textContent=NARRATIONS[idx];}if(forcePlay&&!isPlaying)togglePlay();}
+function togglePlay(){if(!iosUnlocked&&/iPhone|iPad|iPod/.test(navigator.userAgent)){document.getElementById('ios-unlock').classList.add('show');return;}isPlaying=!isPlaying;const btn=document.getElementById('btn-play');btn.innerHTML=isPlaying?'&#9646;&#9646;':'&#9654;';btn.classList.toggle('playing',isPlaying);if(isPlaying){lastTimestamp=performance.now();Speech.speak(NARRATIONS[currentScene]);if(!rafId)rafId=requestAnimationFrame(mainLoop);}else{Speech.pause();}}
+function mainLoop(timestamp){if(!isPlaying){rafId=null;return;}const dt=(timestamp-lastTimestamp)/1000;lastTimestamp=timestamp;elapsedInScene+=dt;const scene=SCENES[currentScene];const prog=Math.min(elapsedInScene/scene.duration,1);resizeCanvas();scene.canvasRender(ctx,W,H,prog);showEquations(scene,prog);updateProgress(Math.min(totalUpTo(currentScene)+elapsedInScene,TOTAL_DURATION));updateCountdown(prog,scene.duration);if(elapsedInScene>=scene.duration&&(narrationDone||!Speech.enabled||!Speech.synth.speaking)){if(currentScene<SCENES.length-1){goToScene(currentScene+1,false);}else{isPlaying=false;Speech.stop();document.getElementById('btn-play').innerHTML='&#9654;';document.getElementById('btn-play').classList.remove('playing');rafId=null;return;}}rafId=requestAnimationFrame(mainLoop);}
+// Progress bar
+function seekTo(pct){const target=pct*TOTAL_DURATION;let acc=0;for(let i=0;i<SCENES.length;i++){if(acc+SCENES[i].duration>target||i===SCENES.length-1){Speech.stop();elapsedInScene=target-acc;currentScene=i;updateInfoPanel(SCENES[i],i);updateBreadcrumb(SCENES[i].stage);document.getElementById('scene-counter').textContent=`${i+1}/${SCENES.length}`;if(!isPlaying){resizeCanvas();const sp=Math.min(elapsedInScene/SCENES[i].duration,1);SCENES[i].canvasRender(ctx,W,H,sp);showEquations(SCENES[i],sp);updateProgress(target);document.getElementById('narration-text').textContent=NARRATIONS[i];}else{Speech.speak(NARRATIONS[i]);}break;}acc+=SCENES[i].duration;}}
+const progressBar=document.getElementById('progress-bar');let isDragging=false;
+function getBarPct(e){const rect=progressBar.getBoundingClientRect();const clientX=e.touches?e.touches[0].clientX:e.clientX;return Math.max(0,Math.min(1,(clientX-rect.left)/rect.width));}
+progressBar.addEventListener('mousedown',e=>{isDragging=true;seekTo(getBarPct(e));});
+progressBar.addEventListener('touchstart',e=>{isDragging=true;seekTo(getBarPct(e));},{passive:true});
+document.addEventListener('mousemove',e=>{if(isDragging)seekTo(getBarPct(e));});
+document.addEventListener('touchmove',e=>{if(isDragging)seekTo(getBarPct(e));},{passive:true});
+document.addEventListener('mouseup',()=>{isDragging=false;});
+document.addEventListener('touchend',()=>{isDragging=false;});
+// Controls
+document.getElementById('btn-play').addEventListener('click',togglePlay);
+document.getElementById('btn-prev').addEventListener('click',()=>{if(currentScene>0)goToScene(currentScene-1,isPlaying);else{elapsedInScene=0;}});
+document.getElementById('btn-next').addEventListener('click',()=>{if(currentScene<SCENES.length-1)goToScene(currentScene+1,isPlaying);});
+document.addEventListener('keydown',e=>{if(e.key===' '){e.preventDefault();togglePlay();}if(e.key==='ArrowRight'){if(currentScene<SCENES.length-1)goToScene(currentScene+1,isPlaying);}if(e.key==='ArrowLeft'){if(currentScene>0)goToScene(currentScene-1,isPlaying);}if(e.key==='m')Speech.toggle();});
+// Voice modal
+const voiceModal=document.getElementById('voice-modal');
+document.getElementById('btn-voice').addEventListener('click',e=>{e.stopPropagation();voiceModal.classList.toggle('open');});
+document.addEventListener('click',e=>{if(!voiceModal.contains(e.target)&&e.target.id!=='btn-voice')voiceModal.classList.remove('open');});
+document.getElementById('voice-select').addEventListener('change',e=>{Speech.setVoice(e.target.value);});
+document.getElementById('rate-slider').addEventListener('input',e=>{Speech.rate=parseFloat(e.target.value);document.getElementById('rate-val').textContent=Speech.rate.toFixed(2)+'×';});
+document.getElementById('pitch-slider').addEventListener('input',e=>{Speech.pitch=parseFloat(e.target.value);document.getElementById('pitch-val').textContent=Speech.pitch.toFixed(2);});
+document.getElementById('vol-slider').addEventListener('input',e=>{Speech.vol=parseFloat(e.target.value);document.getElementById('vol-val').textContent=Math.round(Speech.vol*100)+'%';});
+document.getElementById('btn-test-voice').addEventListener('click',()=>{Speech.speak('This is the selected voice for the quantum anomaly detection explainer.');});
+document.getElementById('btn-ios-start').addEventListener('click',()=>{iosUnlocked=true;document.getElementById('ios-unlock').classList.remove('show');const silent=new SpeechSynthesisUtterance(' ');silent.volume=0;silent.rate=10;window.speechSynthesis.speak(silent);togglePlay();});
+function renderCurrent(){resizeCanvas();const scene=SCENES[currentScene];const sp=Math.min(elapsedInScene/scene.duration,1);scene.canvasRender(ctx,W,H,sp);showEquations(scene,sp);updateProgress(totalUpTo(currentScene)+elapsedInScene);}
+window.addEventListener('resize',()=>{if(!isPlaying)renderCurrent();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(isPlaying)Speech.pause();}else{if(isPlaying)Speech.resume();}});
+// Init
+Speech.init();buildMarkers();goToScene(0,false);resizeCanvas();SCENES[0].canvasRender(ctx,W,H,0);document.getElementById('narration-text').textContent=NARRATIONS[0];
+if(/iPhone|iPad|iPod/.test(navigator.userAgent))document.getElementById('ios-unlock').classList.add('show');
+</script>
+</body>
+</html>
