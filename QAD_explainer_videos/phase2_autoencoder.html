@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Phase 2 · Quantum Autoencoder</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#030509; --panel:rgba(6,14,28,0.9); --border:rgba(180,108,255,0.22);
+  --accent:#b96cff; --accent2:#00ffc8; --gold:#ffb04a; --red:#ff5c7a; --blue:#4aa8ff;
+  --dim:rgba(200,224,244,0.55); --text:#c8e0f4;
+  --mono:'Share Tech Mono',monospace; --head:'Barlow Condensed',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);overflow:hidden}
+button{font-family:var(--mono);cursor:pointer}
+.overlay{position:fixed;inset:0;background:rgba(3,5,9,0.96);z-index:90;
+         display:flex;flex-direction:column;align-items:center;justify-content:center;
+         padding:40px;overflow-y:auto}
+.overlay.hide{display:none}
+.overlay h1,.overlay h2{font-family:var(--head);letter-spacing:.12em;text-transform:uppercase;color:#fff;margin-bottom:18px;text-align:center}
+.overlay h1{font-size:32px}
+.overlay h2{font-size:24px}
+.overlay{justify-content:flex-start !important;padding:24px 32px 32px !important;overflow-y:auto}
+.overlay h1{font-size:26px !important;margin-bottom:10px !important}
+.analogy{max-width:900px;font-size:14px;line-height:1.6;color:var(--text);margin-bottom:14px;text-align:center}
+.translations{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:960px;margin-bottom:14px}
+.translations .tr{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px 18px;font-size:12.5px;line-height:1.55;text-align:left}
+.translations .tr.A{border-left:3px solid var(--accent)}
+.translations .tr.B{border-left:3px solid var(--accent2)}
+.translations .tr .lbl{font-family:var(--head);font-size:11px;letter-spacing:.18em;margin-bottom:6px;color:var(--accent)}
+.translations .tr.B .lbl{color:var(--accent2)}
+.contrast{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:960px;margin-bottom:14px}
+.contrast .box{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px 18px;font-size:12.5px;line-height:1.55}
+.contrast .lbl{font-family:var(--head);font-size:11px;letter-spacing:.18em;color:var(--accent);margin-bottom:6px}
+.contrast .box.q .lbl{color:var(--accent2)}
+.diagram{margin-bottom:26px}
+.cont-btn{background:var(--accent);color:#fff;border:none;padding:14px 34px;font-size:14px;
+          letter-spacing:.2em;text-transform:uppercase;border-radius:3px;font-weight:700}
+.cont-btn:hover{background:var(--accent2);color:#041220}
+.cards2{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:940px;margin-bottom:26px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:20px 24px}
+.card .n{font-family:var(--head);font-size:18px;color:#fff;letter-spacing:.08em;margin-bottom:6px}
+.card.A .n{color:var(--accent)}
+.card.B .n{color:var(--accent2)}
+.card .k{color:var(--dim);font-size:12px;line-height:1.7}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;
+       border-bottom:1px solid var(--border);background:rgba(3,5,9,0.6)}
+header h1{font-family:var(--head);font-size:22px;letter-spacing:.16em;color:#fff;text-transform:uppercase}
+#btn-pause{background:var(--accent);color:#fff;border:none;padding:10px 22px;
+           font-size:13px;letter-spacing:.16em;text-transform:uppercase;border-radius:3px;font-weight:700}
+#btn-pause:hover{background:var(--accent2);color:#041220}
+nav#stage-bar{display:flex;gap:8px;padding:10px 28px;border-bottom:1px solid var(--border);
+              background:rgba(3,5,9,0.4);overflow-x:auto}
+.stage-chip{background:transparent;color:var(--dim);border:1px solid var(--border);
+            padding:8px 16px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+            border-radius:3px;white-space:nowrap;font-family:var(--mono)}
+.stage-chip:hover{color:var(--text);border-color:var(--accent)}
+.stage-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+main{display:grid;grid-template-columns:300px 1fr 260px;gap:14px;padding:14px 18px;
+     height:calc(100vh - 170px)}
+aside, section{background:var(--panel);border:1px solid var(--border);border-radius:6px;
+               padding:16px;overflow-y:auto}
+aside h3, section h3{font-family:var(--head);font-size:13px;letter-spacing:.16em;
+                     color:var(--accent);text-transform:uppercase;margin-bottom:10px}
+.note{font-size:11px;line-height:1.6;color:var(--dim);margin-top:10px}
+#viz{display:flex;flex-direction:column;gap:8px;position:relative}
+.viz-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:0}
+.plot{background:#060a16;border:1px solid var(--border);border-radius:4px;position:relative;overflow:auto;padding:26px 10px 10px}
+.plot .lbl{position:absolute;top:6px;left:10px;font-size:11px;color:var(--accent);letter-spacing:.14em;z-index:2}
+.plot.B .lbl{color:var(--accent2)}
+.metric{display:flex;justify-content:space-between;font-size:12px;margin:4px 0;
+        padding:5px 8px;background:#0a0a18;border-radius:3px}
+.metric .mv{color:#fff;font-weight:700}
+.metric.A .mv{color:var(--accent)}
+.metric.B .mv{color:var(--accent2)}
+footer#banner{padding:14px 28px;border-top:1px solid var(--border);background:rgba(3,5,9,0.7);
+              font-size:13px;color:var(--text);letter-spacing:.04em;min-height:50px;
+              display:flex;align-items:center;gap:14px}
+#banner .st{color:var(--accent);font-family:var(--head);letter-spacing:.16em;text-transform:uppercase;font-size:12px}
+</style>
+</head>
+<body>
+
+<div id="intuition" class="overlay">
+  <h1>Phase 2 · Compression Test</h1>
+  <div class="analogy">
+    <b>The trick in one sentence:</b> train the autoencoder ONLY on normal rows so it becomes very good at
+    compressing-and-rebuilding normals. Then on any new row, if the rebuild is sloppy, that row is
+    anomalous — because the autoencoder has never learned how to rebuild anything outside normal.
+    <br/><br/>
+    <div style="margin:8px auto;max-width:840px;padding:12px 18px;background:rgba(0,255,200,0.07);border-left:3px solid #00ffc8;border-radius:4px;text-align:left">
+      <b style="color:#00ffc8">Why does "can't rebuild" imply anomaly?</b>
+      The autoencoder has only 3 numbers to describe any row (the latent). During training on normal
+      data it uses those 3 numbers to encode whatever shape normals have in common. Anything else — any
+      feature combination OUTSIDE that learned shape — literally has no home in the 3-number summary.
+      The encoder drops the off-shape information (it has nowhere to put it); the decoder can't bring
+      it back (it has no code for it). The missing information shows up as a mismatch between input
+      and rebuild. <b>Rebuild error = evidence that the row has structure the "normal shape" doesn't
+      know about.</b> That evidence is exactly what defines an anomaly.
+    </div>
+    <div style="margin-top:8px;padding:10px 14px;background:rgba(255,92,122,0.08);border-left:3px solid #ff5c7a;border-radius:4px;font-size:13px;text-align:left">
+      <b style="color:#ff5c7a">Still unsupervised:</b> during training we never say "these are anomalies."
+      The autoencoder only sees normals. Anomalies are what it CAN'T handle at inference time — we
+      never need to label them to find them.
+    </div>
+  </div>
+  <div class="translations">
+    <div class="tr A">
+      <div class="lbl">Credit-card transactions — why rebuild-fails = fraud</div>
+      A row's 8 features are amount, hour, merchant-risk-score, distance-from-home, device-fingerprint-similarity, etc.
+      After training on millions of <em>normal</em> purchases, the encoder has found that all normal rows fit
+      a 3-parameter pattern like {time-of-day, spend-tier, merchant-cluster}. A <em>normal</em> row plugs into those
+      3 parameters cleanly → the decoder rebuilds it exactly.
+      <br/><br/>
+      <b>A fraud row</b> (e.g. huge amount × foreign merchant × never-seen device at 3 AM) has a feature combination
+      the 3-parameter normal pattern never saw. The encoder has no "code" for the weird combo — it gets rounded
+      off during compression. The decoder rebuilds the row using the nearest normal shape, and the
+      amount / merchant / device fields come out WRONG. Those wrong fields are the rebuild error: the
+      autoencoder is telling you "this row contains something I was not trained to represent."
+    </div>
+    <div class="tr B">
+      <div class="lbl">Optical-fibre OTDR traces — why rebuild-fails = intrusion</div>
+      A row is a 102-bin return-loss curve. A <em>healthy</em> fibre gives a smooth exponential-decay shape with
+      just 3 parameters (launch power, fibre attenuation, noise floor). The encoder squeezes any healthy trace
+      into those 3 numbers; the decoder rebuilds a smooth decay back out — matches perfectly.
+      <br/><br/>
+      <b>A tap / dig / bend / break</b> creates a local spike or dip at its distance bin plus small losses downstream.
+      The 3-parameter smooth-decay pattern physically cannot produce a spike — it has no "code" for localised
+      perturbations. The encoder discards the spike; the decoder rebuilds a smooth decay. The rebuild fails
+      exactly at the event's bins: the gap between input and rebuild shows you <em>where on the cable</em>
+      the intrusion happened. The rebuild error is itself a diagnostic.
+    </div>
+  </div>
+  <div class="contrast">
+    <div class="box c"><div class="lbl">Classical PCA</div>
+      Compresses using straight lines. Works when the "normal shape" is linear. Misses curved manifolds,
+      so it under-flags subtle anomalies.
+    </div>
+    <div class="box q"><div class="lbl">Quantum Autoencoder</div>
+      Compresses using non-linear quantum rotations + entanglement. Catches curved normal shapes that PCA
+      flattens out, so rebuild error is cleaner at small anomaly magnitudes.
+    </div>
+  </div>
+  <div class="diagram">
+    <svg width="560" height="120" viewBox="0 0 560 120">
+      <g transform="translate(40,60)">
+        <g>
+          <rect x="-40" y="-14" width="12" height="28" fill="#4aa8ff"/>
+          <rect x="-26" y="-14" width="12" height="28" fill="#4aa8ff"/>
+          <rect x="-12" y="-14" width="12" height="28" fill="#4aa8ff"/>
+          <rect x="2"   y="-14" width="12" height="28" fill="#4aa8ff"/>
+          <rect x="16"  y="-14" width="12" height="28" fill="#4aa8ff"/>
+          <rect x="30"  y="-14" width="12" height="28" fill="#4aa8ff"/>
+        </g>
+        <text y="36" text-anchor="middle" fill="#c8e0f4" font-family="Share Tech Mono" font-size="10">input row (photo)</text>
+      </g>
+      <g transform="translate(230,60)">
+        <rect x="-14" y="-12" width="10" height="24" fill="#b96cff"/>
+        <rect x="-2"  y="-12" width="10" height="24" fill="#b96cff"/>
+        <rect x="10"  y="-12" width="10" height="24" fill="#b96cff"/>
+        <text y="36" text-anchor="middle" fill="#c8e0f4" font-family="Share Tech Mono" font-size="10">thumbnail (latent)</text>
+      </g>
+      <g transform="translate(400,60)">
+        <g>
+          <rect x="-40" y="-14" width="12" height="28" fill="#00ffc8"/>
+          <rect x="-26" y="-14" width="12" height="28" fill="#00ffc8"/>
+          <rect x="-12" y="-14" width="12" height="28" fill="#00ffc8"/>
+          <rect x="2"   y="-14" width="12" height="28" fill="#00ffc8"/>
+          <rect x="16"  y="-14" width="12" height="28" fill="#00ffc8"/>
+          <rect x="30"  y="-14" width="12" height="28" fill="#00ffc8"/>
+        </g>
+        <text y="36" text-anchor="middle" fill="#c8e0f4" font-family="Share Tech Mono" font-size="10">rebuilt row</text>
+      </g>
+      <g transform="translate(520,60)">
+        <rect x="-12" y="-14" width="24" height="28" fill="#ff5c7a"/>
+        <text y="36" text-anchor="middle" fill="#c8e0f4" font-family="Share Tech Mono" font-size="10">error</text>
+      </g>
+      <line x1="95" y1="60" x2="210" y2="60" stroke="#c8e0f4" stroke-width="1"/>
+      <line x1="258" y1="60" x2="357" y2="60" stroke="#c8e0f4" stroke-width="1"/>
+      <line x1="447" y1="60" x2="504" y2="60" stroke="#c8e0f4" stroke-width="1"/>
+    </svg>
+  </div>
+  <button id="btn-intuition" class="cont-btn">Continue &rarr;</button>
+</div>
+
+<div id="intro" class="overlay hide">
+  <h2>Two Real Datasets, Side-by-Side</h2>
+  <div class="cards2">
+    <div class="card A">
+      <div class="n">Credit Card Transactions</div>
+      <div class="k">Payment-card fraud. Phase 2 receives the pool Phase 1 filtered.
+      Each row's 8 features are compressed to a 3-value latent, rebuilt to 8, and the rebuild-error
+      is scored. Higher rebuild error = more suspicious.</div>
+    </div>
+    <div class="card B">
+      <div class="n">Optical-Fibre OTDR Traces</div>
+      <div class="k">Photonic-fibre return-loss. Each row is an <b>OTDR scan</b> — a laser pulse
+      sent into a fibre with back-scattered light recorded at 102 distance bins along the cable.
+      Normal traces show a smooth exponential decay; anomalies (taps, digs, bends, breaks) create
+      correlated spikes/dips across neighbouring bins. The autoencoder learns what a healthy
+      fibre's decay curve looks like and flags rows that don't compress cleanly into that shape.</div>
+    </div>
+  </div>
+  <div class="analogy" style="max-width:720px">
+    Six stages: see inputs, encode to latent, decode back, measure error,
+    combine with Phase 1 score, hand off.
+  </div>
+  <button id="btn-intro" class="cont-btn">Start the video &rarr;</button>
+</div>
+
+<header>
+  <h1>Phase 2 &middot; Quantum Autoencoder</h1>
+  <button id="btn-pause">&#9654; START</button>
+</header>
+
+<nav id="stage-bar"></nav>
+
+<main>
+  <aside id="left">
+    <h3>Circuit</h3>
+    <svg viewBox="0 0 260 200" width="100%">
+      <g font-family="Share Tech Mono" font-size="9" fill="#c8e0f4">
+        <text x="6" y="24">q0</text><text x="6" y="40">q1</text>
+        <text x="6" y="56">q2</text><text x="6" y="72">q3</text>
+        <text x="6" y="88">q4</text><text x="6" y="104">q5</text>
+        <text x="6" y="120">q6</text><text x="6" y="136">q7</text>
+        <line x1="28" y1="24"  x2="250" y2="24"  stroke="#555"/>
+        <line x1="28" y1="40"  x2="250" y2="40"  stroke="#555"/>
+        <line x1="28" y1="56"  x2="250" y2="56"  stroke="#555"/>
+        <line x1="28" y1="72"  x2="250" y2="72"  stroke="#b96cff" stroke-dasharray="3,2"/>
+        <line x1="28" y1="88"  x2="250" y2="88"  stroke="#b96cff" stroke-dasharray="3,2"/>
+        <line x1="28" y1="104" x2="250" y2="104" stroke="#b96cff" stroke-dasharray="3,2"/>
+        <line x1="28" y1="120" x2="250" y2="120" stroke="#b96cff" stroke-dasharray="3,2"/>
+        <line x1="28" y1="136" x2="250" y2="136" stroke="#b96cff" stroke-dasharray="3,2"/>
+        <rect x="36" y="14" width="50" height="130" fill="#0d0820" stroke="#00ffc8"/>
+        <text x="61" y="82" text-anchor="middle" fill="#00ffc8">Encoder</text>
+        <rect x="96" y="14" width="42" height="130" fill="#0d0820" stroke="#ffb04a"/>
+        <text x="117" y="60" text-anchor="middle" fill="#ffb04a" font-size="8">SWAP</text>
+        <text x="117" y="72" text-anchor="middle" fill="#ffb04a" font-size="8">test</text>
+        <rect x="150" y="14" width="50" height="130" fill="#0d0820" stroke="#00b4ff"/>
+        <text x="175" y="82" text-anchor="middle" fill="#00b4ff">Decoder</text>
+        <text x="154" y="165" fill="#b96cff" font-size="9">trash qubits</text>
+        <line x1="150" y1="160" x2="150" y2="72" stroke="#b96cff" stroke-dasharray="2,2"/>
+      </g>
+    </svg>
+    <div class="note">
+      Hardware-efficient ansatz compresses 8 qubits into 3 latent qubits.
+      The 5 trash qubits are SWAP-tested against |0&rang;&#8325;; fidelity F is the purity
+      of the trash register. Anomaly score S_A = 1 &minus; F(trash, |0&rang;&#8325;).
+      Normal rows: high fidelity, low S_A. Anomalous rows: low fidelity, high S_A.
+    </div>
+  </aside>
+
+  <section id="viz">
+    <div class="viz-row">
+      <div class="plot A">
+        <div class="lbl">Credit Card Transactions</div>
+        <svg id="svgA" width="100%" height="100%" viewBox="0 0 420 420" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+      <div class="plot B">
+        <div class="lbl">Optical-Fibre OTDR</div>
+        <svg id="svgB" width="100%" height="100%" viewBox="0 0 420 420" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+  </section>
+
+  <aside id="right">
+    <h3>Metrics</h3>
+    <div style="font-size:10px;color:var(--dim);letter-spacing:.08em;margin-bottom:8px;line-height:1.5">
+      <b>Score names (letter after <i>S</i>):</b><br/>
+      <i>S<sub>K</sub></i> = Phase 1 <b>K</b>ernel score ·
+      <i>S<sub>A</sub></i> = Phase 2 <b>A</b>utoencoder score ·
+      <i>S<sub>C</sub></i> = <b>C</b>ombined score<br/>
+      The subscript is the method, not the dataset.
+    </div>
+    <div class="metric A"><span>Credit Card · rows in pool</span><span class="mv" id="mA-rows">10</span></div>
+    <div class="metric A"><span>Credit Card · mean <i>S<sub>A</sub></i></span><span class="mv" id="mA-sa">&mdash;</span></div>
+    <div class="metric A"><span>Credit Card · mean <i>S<sub>C</sub></i></span><span class="mv" id="mA-sc">&mdash;</span></div>
+    <div class="metric A"><span>Credit Card · weight <i>w</i></span><span class="mv">0.60</span></div>
+    <div style="height:14px"></div>
+    <div class="metric B"><span>OTDR · rows in pool</span><span class="mv" id="mB-rows">10</span></div>
+    <div class="metric B"><span>OTDR · mean <i>S<sub>A</sub></i></span><span class="mv" id="mB-sa">&mdash;</span></div>
+    <div class="metric B"><span>OTDR · mean <i>S<sub>C</sub></i></span><span class="mv" id="mB-sc">&mdash;</span></div>
+    <div class="metric B"><span>OTDR · weight <i>w</i></span><span class="mv">0.45</span></div>
+    <div class="note">
+      <i>S<sub>C</sub></i> = <i>w</i>·<i>S<sub>K</sub></i> + (1−<i>w</i>)·<i>S<sub>A</sub></i>.
+      Top-ranked rows go to Phase 3.
+    </div>
+  </aside>
+</main>
+
+<footer id="banner">
+  <span class="st" id="bn-stage">Stage 1</span>
+  <span id="bn-text">Input photos.</span>
+</footer>
+
+<script>
+const STAGES = [
+  {name:'Input',          dur:5, text:'Ten rows arrive from Phase 1. Left side shows the input feature vector as 8 coloured pixels.'},
+  {name:'Encode',         dur:6, text:'The autoencoder squeezes 8 pixels into a 3-pixel thumbnail (latent).'},
+  {name:'Decode',         dur:6, text:'The thumbnail is expanded back into 8 rebuilt pixels.'},
+  {name:'Measure Error',  dur:6, text:'The difference bar shows how far the rebuilt photo drifts from the original. Fraud rows drift more.'},
+  {name:'Combine S_K + S_A', dur:6, text:'Phase 1 kernel score and Phase 2 anomaly score are blended into the combined score S_C.'},
+  {name:'Hand-off',       dur:5, text:'Top-ranked rows by S_C are forwarded to Phase 3.'},
+];
+
+let paused = true;
+let stageIdx = 0;
+let stageClock = 0;
+let lastT = performance.now();
+
+const stageBar = document.getElementById('stage-bar');
+STAGES.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='stage-chip'; b.dataset.stage=i;
+  b.textContent=(i+1)+'. '+s.name;
+  b.addEventListener('click', ()=>{ stageIdx=i; stageClock=0; updateStageBar(); updateBanner(); });
+  stageBar.appendChild(b);
+});
+const stageChips = [...document.querySelectorAll('.stage-chip')];
+
+function rand(seed){return function(){ seed = (seed*9301+49297) % 233280; return seed/233280; };}
+
+function makeRows(n, fraudRate, rng, wA){
+  const rows=[];
+  for (let i=0;i<n;i++){
+    const isFraud = rng() < fraudRate;
+    const v=[];
+    for (let j=0;j<8;j++){
+      if (isFraud){
+        v.push(0.3 + rng()*0.7);
+      } else {
+        v.push(0.2 + rng()*0.3);
+      }
+    }
+    // rebuilt: normals close to input, fraud drifts
+    const rebuilt=v.map(x=> isFraud ? Math.max(0, Math.min(1, x - 0.2 + (rng()-0.5)*0.4))
+                                    : Math.max(0, Math.min(1, x + (rng()-0.5)*0.06)));
+    const err = v.reduce((s,x,j)=>s+Math.abs(x-rebuilt[j]),0)/8;
+    const sA = Math.min(1, err*2.2);
+    const sK = isFraud ? 0.5 + rng()*0.4 : 0.1 + rng()*0.3;
+    const sC = wA*sK + (1-wA)*sA;
+    rows.push({id:i, fraud:isFraud, v, rebuilt, err, sA, sK, sC});
+  }
+  return rows;
+}
+const ROWS_A = makeRows(10, 0.35, rand(23), 0.60);
+const ROWS_B = makeRows(10, 0.50, rand(53), 0.45);
+
+const svgNS='http://www.w3.org/2000/svg';
+function clear(svg){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+function mk(tag, attrs, text){
+  const el=document.createElementNS(svgNS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  if (text!==undefined) el.textContent=text;
+  return el;
+}
+
+function shade(v, hue){
+  const a = 0.4 + 0.6*v;
+  if (hue==='blue') return 'rgba(74,168,255,'+a+')';
+  if (hue==='purple') return 'rgba(185,108,255,'+a+')';
+  return 'rgba(0,255,200,'+a+')';
+}
+
+function renderPanel(svg, rows, stage, progress){
+  clear(svg);
+  const rowH = 36;
+  const yTop = 14;
+
+  // Column headers
+  svg.appendChild(mk('text',{x:32,y:8,fill:'#b96cff','font-size':'9','font-family':'Share Tech Mono'},'input'));
+  svg.appendChild(mk('text',{x:156,y:8,fill:'#b96cff','font-size':'9','font-family':'Share Tech Mono'},'latent'));
+  svg.appendChild(mk('text',{x:232,y:8,fill:'#b96cff','font-size':'9','font-family':'Share Tech Mono'},'rebuilt'));
+  svg.appendChild(mk('text',{x:336,y:8,fill:'#b96cff','font-size':'9','font-family':'Share Tech Mono'},'error'));
+  svg.appendChild(mk('text',{x:380,y:8,fill:'#b96cff','font-size':'9','font-family':'Share Tech Mono'},'S_C'));
+
+  rows.forEach((r, i)=>{
+    const y = yTop + i*rowH;
+
+    // id label
+    const idTxt = mk('text',{x:8,y:y+18,fill:r.fraud?'#ff5c7a':'#c8e0f4','font-size':'9','font-family':'Share Tech Mono'},
+      (r.fraud?'F':'N')+String(i+1).padStart(2,'0'));
+    svg.appendChild(idTxt);
+
+    // input pixels (8)
+    const inputX = 30;
+    const px = 12;
+    const encProg = stage>=1 ? Math.min(1, stage===1? progress : 1) : 0;
+    for (let j=0;j<8;j++){
+      const cx = inputX + j*px;
+      svg.appendChild(mk('rect',{x:cx,y:y+4,width:px-1,height:22,
+        fill:shade(r.v[j],'blue'),stroke:'rgba(74,168,255,0.6)','stroke-width':'0.4'}));
+    }
+
+    // Encoder arrow + latent pixels (3)
+    const latentX = 152;
+    if (stage>=1){
+      const t = Math.min(1, stage===1 ? progress : 1);
+      // arrow from inputs to latent
+      svg.appendChild(mk('line',{x1:inputX+8*px, y1:y+15, x2:latentX-2, y2:y+15,
+        stroke:'#b96cff','stroke-width':'1','opacity':t}));
+      for (let j=0;j<3;j++){
+        const cx = latentX + j*px;
+        const lv = (r.v[j]+r.v[j+3]+r.v[j+5])/3;
+        svg.appendChild(mk('rect',{x:cx,y:y+4,width:px-1,height:22,
+          fill:shade(lv,'purple'),stroke:'rgba(185,108,255,0.7)','stroke-width':'0.5','opacity':t}));
+      }
+    }
+
+    // Decoder arrow + rebuilt pixels (8)
+    const rebuiltX = 230;
+    if (stage>=2){
+      const t = Math.min(1, stage===2 ? progress : 1);
+      svg.appendChild(mk('line',{x1:latentX+3*px, y1:y+15, x2:rebuiltX-2, y2:y+15,
+        stroke:'#00ffc8','stroke-width':'1','opacity':t}));
+      for (let j=0;j<8;j++){
+        const cx = rebuiltX + j*px;
+        // animate from blank to rebuilt
+        const v = r.rebuilt[j]*t;
+        svg.appendChild(mk('rect',{x:cx,y:y+4,width:px-1,height:22,
+          fill:shade(v,'green'),stroke:'rgba(0,255,200,0.6)','stroke-width':'0.4','opacity':t}));
+      }
+    }
+
+    // Error bar
+    const errX = 334;
+    if (stage>=3){
+      const t = Math.min(1, stage===3 ? progress : 1);
+      const w = r.err * 40 * t;
+      const color = r.fraud ? '#ff5c7a' : '#4aa8ff';
+      svg.appendChild(mk('rect',{x:errX,y:y+7,width:w,height:16,fill:color,opacity:0.9}));
+      svg.appendChild(mk('text',{x:errX+42,y:y+18,fill:color,'font-size':'8','font-family':'Share Tech Mono'},
+        r.sA.toFixed(2)));
+    }
+
+    // S_C combined bar
+    if (stage>=4){
+      const t = Math.min(1, stage===4 ? progress : 1);
+      const w = r.sC * 30 * t;
+      svg.appendChild(mk('rect',{x:378,y:y+7,width:w,height:16,fill:'#ffb04a',opacity:0.9}));
+    }
+
+    // Hand-off: highlight top S_C
+    if (stage===5){
+      const sorted=[...rows].sort((a,b)=>b.sC-a.sC);
+      const keep = sorted.slice(0, Math.ceil(rows.length*0.5)).map(x=>x.id);
+      if (keep.includes(r.id)){
+        svg.appendChild(mk('rect',{x:2,y:y+2,width:410,height:26,fill:'none',
+          stroke:'#00ffc8','stroke-width':'1','opacity':Math.min(1, progress*2),'rx':'2'}));
+      }
+    }
+  });
+
+  if (stage===5){
+    const t = Math.min(1, progress*2);
+    svg.appendChild(mk('path',{
+      d:'M 210 395 L 210 415 M 198 405 L 210 415 L 222 405',
+      stroke:'#00ffc8','stroke-width':'2.5',fill:'none',opacity:t
+    }));
+    svg.appendChild(mk('text',{x:210,y:390,fill:'#00ffc8','font-size':'11',
+      'font-family':'Share Tech Mono','text-anchor':'middle','opacity':t},'to Phase 3'));
+  }
+}
+
+const mA_rows=document.getElementById('mA-rows');
+const mA_sa  =document.getElementById('mA-sa');
+const mA_sc  =document.getElementById('mA-sc');
+const mB_rows=document.getElementById('mB-rows');
+const mB_sa  =document.getElementById('mB-sa');
+const mB_sc  =document.getElementById('mB-sc');
+
+function updateMetrics(stage){
+  mA_rows.textContent=ROWS_A.length;
+  mB_rows.textContent=ROWS_B.length;
+  if (stage>=3){
+    mA_sa.textContent=(ROWS_A.reduce((s,r)=>s+r.sA,0)/ROWS_A.length).toFixed(3);
+    mB_sa.textContent=(ROWS_B.reduce((s,r)=>s+r.sA,0)/ROWS_B.length).toFixed(3);
+  } else { mA_sa.textContent='—'; mB_sa.textContent='—'; }
+  if (stage>=4){
+    mA_sc.textContent=(ROWS_A.reduce((s,r)=>s+r.sC,0)/ROWS_A.length).toFixed(3);
+    mB_sc.textContent=(ROWS_B.reduce((s,r)=>s+r.sC,0)/ROWS_B.length).toFixed(3);
+  } else { mA_sc.textContent='—'; mB_sc.textContent='—'; }
+}
+
+const bnStage=document.getElementById('bn-stage');
+const bnText=document.getElementById('bn-text');
+function updateBanner(){
+  bnStage.textContent='Stage '+(stageIdx+1);
+  bnText.textContent=STAGES[stageIdx].text;
+}
+function updateStageBar(){
+  stageChips.forEach((c,i)=>c.classList.toggle('active', i===stageIdx));
+}
+
+const svgA=document.getElementById('svgA');
+const svgB=document.getElementById('svgB');
+
+function render(stage, p){
+  renderPanel(svgA, ROWS_A, stage, p);
+  renderPanel(svgB, ROWS_B, stage, p);
+  updateMetrics(stage);
+}
+function advanceStage(){
+  stageIdx = (stageIdx+1) % STAGES.length;
+  stageClock = 0;
+  updateBanner();
+  updateStageBar();
+}
+function tick(now){
+  requestAnimationFrame(tick);
+  const dt = (now - lastT)/1000;
+  lastT = now;
+  if (!paused){
+    stageClock += dt;
+    if (stageClock > STAGES[stageIdx].dur) advanceStage();
+    render(stageIdx, Math.min(1, stageClock/STAGES[stageIdx].dur));
+  } else {
+    render(stageIdx, Math.min(1, stageClock/STAGES[stageIdx].dur));
+  }
+}
+requestAnimationFrame(tick);
+
+document.getElementById('btn-intuition').addEventListener('click', ()=>{
+  document.getElementById('intuition').classList.add('hide');
+  document.getElementById('intro').classList.remove('hide');
+});
+document.getElementById('btn-intro').addEventListener('click', ()=>{
+  document.getElementById('intro').classList.add('hide');
+  paused=false; stageClock=0; stageIdx=0;
+  btnPause.textContent='⏸ PAUSE';
+  updateBanner(); updateStageBar();
+});
+const btnPause=document.getElementById('btn-pause');
+btnPause.addEventListener('click', ()=>{
+  if (!document.getElementById('intro').classList.contains('hide')) return;
+  paused = !paused;
+  btnPause.textContent = paused ? '▶ RESUME' : '⏸ PAUSE';
+});
+
+updateBanner();
+updateStageBar();
+render(0,0);
+</script>
+</body>
+</html>

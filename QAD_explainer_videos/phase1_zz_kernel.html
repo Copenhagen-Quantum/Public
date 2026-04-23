@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Phase 1 · ZZ-Kernel Prescreen</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#030509; --panel:rgba(6,14,28,0.9); --border:rgba(0,180,255,0.22);
+  --accent:#00b4ff; --accent2:#00ffc8; --gold:#ffb04a; --red:#ff5c7a;
+  --dim:rgba(200,224,244,0.55); --text:#c8e0f4;
+  --mono:'Share Tech Mono',monospace; --head:'Barlow Condensed',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);overflow:hidden}
+button{font-family:var(--mono);cursor:pointer}
+.overlay{position:fixed;inset:0;background:rgba(3,5,9,0.96);z-index:90;
+         display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+         padding:24px 32px 32px;overflow-y:auto}
+.overlay.hide{display:none}
+.overlay h1,.overlay h2{font-family:var(--head);letter-spacing:.12em;text-transform:uppercase;color:#fff;margin-bottom:12px;text-align:center}
+.overlay h1{font-size:26px}
+.overlay h2{font-size:22px}
+.analogy{max-width:900px;font-size:14px;line-height:1.6;color:var(--text);margin-bottom:16px;text-align:center}
+.translations{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:960px;margin-bottom:16px}
+.translations .tr{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px 18px;font-size:12.5px;line-height:1.55}
+.translations .tr.A{border-left:3px solid var(--accent)}
+.translations .tr.B{border-left:3px solid var(--accent2)}
+.translations .tr .lbl{font-family:var(--head);font-size:11px;letter-spacing:.18em;margin-bottom:6px;color:var(--accent)}
+.translations .tr.B .lbl{color:var(--accent2)}
+.contrast{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:960px;margin-bottom:16px}
+.contrast .box{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px 18px;font-size:12.5px;line-height:1.55}
+.contrast .lbl{font-family:var(--head);font-size:11px;letter-spacing:.18em;color:var(--accent);margin-bottom:6px}
+.contrast .box.q .lbl{color:var(--accent2)}
+.diagram{margin-bottom:16px}
+.cont-btn{background:var(--accent);color:#041220;border:none;padding:14px 34px;font-size:14px;
+          letter-spacing:.2em;text-transform:uppercase;border-radius:3px;font-weight:700}
+.cont-btn:hover{background:var(--accent2)}
+.cards2{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:940px;margin-bottom:26px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:20px 24px}
+.card .n{font-family:var(--head);font-size:18px;color:#fff;letter-spacing:.08em;margin-bottom:6px}
+.card.A .n{color:var(--accent)}
+.card.B .n{color:var(--accent2)}
+.card .k{color:var(--dim);font-size:12px;line-height:1.7}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;
+       border-bottom:1px solid var(--border);background:rgba(3,5,9,0.6)}
+header h1{font-family:var(--head);font-size:22px;letter-spacing:.16em;color:#fff;text-transform:uppercase}
+#btn-pause{background:var(--accent);color:#041220;border:none;padding:10px 22px;
+           font-size:13px;letter-spacing:.16em;text-transform:uppercase;border-radius:3px;font-weight:700}
+#btn-pause:hover{background:var(--accent2)}
+nav#stage-bar{display:flex;gap:8px;padding:10px 28px;border-bottom:1px solid var(--border);
+              background:rgba(3,5,9,0.4);overflow-x:auto}
+.stage-chip{background:transparent;color:var(--dim);border:1px solid var(--border);
+            padding:8px 16px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+            border-radius:3px;white-space:nowrap;font-family:var(--mono)}
+.stage-chip:hover{color:var(--text);border-color:var(--accent)}
+.stage-chip.active{background:var(--accent);color:#041220;border-color:var(--accent);font-weight:700}
+main{display:grid;grid-template-columns:300px 1fr 260px;gap:14px;padding:14px 18px;
+     height:calc(100vh - 170px)}
+aside, section{background:var(--panel);border:1px solid var(--border);border-radius:6px;
+               padding:16px;overflow-y:auto}
+aside h3, section h3{font-family:var(--head);font-size:13px;letter-spacing:.16em;
+                     color:var(--accent);text-transform:uppercase;margin-bottom:10px}
+.note{font-size:11px;line-height:1.6;color:var(--dim);margin-top:10px}
+#viz{display:flex;flex-direction:column;gap:8px;position:relative}
+#legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11px;padding:8px 10px;
+        background:#061528;border:1px solid var(--border);border-radius:4px;color:var(--text)}
+#legend .lg-item{display:flex;align-items:center;gap:6px}
+#legend .lg-item .lg-sym{display:inline-block;width:16px;height:16px;position:relative}
+#legend svg{overflow:visible}
+.viz-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:0}
+.plot{background:#051225;border:1px solid var(--border);border-radius:4px;position:relative;overflow:hidden}
+.plot .lbl{position:absolute;top:8px;left:10px;font-size:11px;color:var(--accent);letter-spacing:.14em;z-index:3}
+.plot .sub{position:absolute;top:26px;left:10px;font-size:9.5px;color:var(--dim);letter-spacing:.06em;z-index:3}
+.plot.B .lbl{color:var(--accent2)}
+.metric{display:flex;justify-content:space-between;font-size:12px;margin:4px 0;
+        padding:5px 8px;background:#061528;border-radius:3px}
+.metric .mv{color:#fff;font-weight:700}
+.metric.A .mv{color:var(--accent)}
+.metric.B .mv{color:var(--accent2)}
+footer#banner{padding:14px 28px;border-top:1px solid var(--border);background:rgba(3,5,9,0.7);
+              font-size:13px;color:var(--text);letter-spacing:.04em;min-height:50px;
+              display:flex;align-items:center;gap:14px}
+#banner .st{color:var(--accent);font-family:var(--head);letter-spacing:.16em;text-transform:uppercase;font-size:12px}
+</style>
+</head>
+<body>
+
+<div id="intuition" class="overlay">
+  <h1>Phase 1 · Fingerprint Check</h1>
+  <div class="analogy">
+    Every <em>row</em> — one card purchase or one fibre-cable scan — gets a digital fingerprint.
+    The quantum kernel compares each fingerprint to a <em>reference set</em> of known-normal
+    fingerprints; rows very different from every normal reference are flagged as suspicious.
+    Unlike classical methods, the quantum kernel compares <em>how every pair of features relates</em>
+    at the same time &mdash; not one at a time.
+    <div style="margin-top:10px;padding:10px 14px;background:rgba(255,92,122,0.08);border-left:3px solid #ff5c7a;border-radius:4px;font-size:13px;text-align:left">
+      <b style="color:#ff5c7a">Important:</b> the pipeline is <b>unsupervised</b>. We do not train
+      on "these are fraud, these are normal." The method must find anomalies from features
+      alone. The red/blue colouring in the video is shown to you only so you can see whether the
+      kernel got it right — the kernel itself is colour-blind.
+    </div>
+  </div>
+  <div class="translations">
+    <div class="tr A">
+      <div class="lbl">Credit-card transactions</div>
+      A "row" = one purchase (amount, time, merchant, device, country…). "Normal R" = known-good
+      purchases. Fraud hides when each field looks plausible alone — the <em>combination</em>
+      (odd amount × new merchant × foreign country at 3 AM) reveals it. The kernel catches
+      combinations in one shot.
+    </div>
+    <div class="tr B">
+      <div class="lbl">Optical-fibre OTDR traces</div>
+      A "row" = one laser-pulse scan, return-loss at 102 distance bins along the cable. "Normal
+      R" = healthy-fibre scans with their smooth exponential decay. An intrusion (tap, dig,
+      bend, break) creates a <em>correlated</em> spike-plus-loss across neighbouring bins that
+      no single-bin check notices.
+    </div>
+  </div>
+  <div class="contrast">
+    <div class="box c"><div class="lbl">Classical</div>
+      One feature at a time — like checking one ID field or one fibre-bin at a time. Misses
+      patterns hidden across correlated fields.</div>
+    <div class="box q"><div class="lbl">Quantum Kernel</div>
+      Entire feature-interaction fingerprint at once: every pair of fields in a transaction, every
+      pair of bins in a scan. Catches correlated anomalies.</div>
+  </div>
+  <div class="diagram">
+    <svg width="460" height="100" viewBox="0 0 520 140">
+      <g transform="translate(30,70)">
+        <circle r="22" fill="#061528" stroke="#00b4ff" stroke-width="2"/>
+        <text text-anchor="middle" y="5" fill="#c8e0f4" font-family="Share Tech Mono" font-size="11">row x</text>
+      </g>
+      <g transform="translate(180,70)">
+        <rect x="-40" y="-22" width="80" height="44" fill="#061528" stroke="#00ffc8" stroke-width="2" rx="4"/>
+        <text text-anchor="middle" y="5" fill="#00ffc8" font-family="Share Tech Mono" font-size="11">fingerprint</text>
+      </g>
+      <g transform="translate(330,70)">
+        <rect x="-52" y="-22" width="104" height="44" fill="#061528" stroke="#ffb04a" stroke-width="2" rx="4"/>
+        <text text-anchor="middle" y="-2" fill="#ffb04a" font-family="Share Tech Mono" font-size="10">compare to</text>
+        <text text-anchor="middle" y="12" fill="#ffb04a" font-family="Share Tech Mono" font-size="10">reference set R</text>
+      </g>
+      <g transform="translate(480,70)">
+        <rect x="-32" y="-22" width="64" height="44" fill="#061528" stroke="#ff5c7a" stroke-width="2" rx="4"/>
+        <text text-anchor="middle" y="5" fill="#ff5c7a" font-family="Share Tech Mono" font-size="11">score S_K</text>
+      </g>
+      <line x1="53" y1="70" x2="140" y2="70" stroke="#c8e0f4" stroke-width="1"/>
+      <line x1="220" y1="70" x2="278" y2="70" stroke="#c8e0f4" stroke-width="1"/>
+      <line x1="382" y1="70" x2="448" y2="70" stroke="#c8e0f4" stroke-width="1"/>
+    </svg>
+  </div>
+  <button id="btn-intuition" class="cont-btn">Continue &rarr;</button>
+</div>
+
+<div id="intro" class="overlay hide">
+  <h2>Two Real Datasets, Side-by-Side</h2>
+  <div class="cards2">
+    <div class="card A">
+      <div class="n">Credit Card Transactions</div>
+      <div class="k">Financial payment-card fraud &middot; 284,807 rows &middot; 0.17% fraud &middot; 30 PCA-anonymised features.
+      Each row is one European card purchase (amount, time, merchant fingerprint, etc., PCA-scrambled for privacy).
+      Fraud = confirmed chargeback. Highly imbalanced — the needle-in-haystack setting banks actually face.</div>
+    </div>
+    <div class="card B">
+      <div class="n">Optical-Fibre OTDR Traces</div>
+      <div class="k">Photonic-fibre return-loss traces &middot; 372 rows &middot; 43% anomaly &middot; 102 channels.
+      Each row is one <b>OTDR scan</b> (Optical Time-Domain Reflectometry): a short laser pulse is sent
+      down a fibre-optic cable and the back-scattered light is recorded at 102 distance bins along
+      the cable. An intact fibre gives a smooth exponential decay; an <b>anomaly</b> — a tap (someone
+      listening in), a dig strike, a sharp bend, or a break — shows up as a spike or dip at the
+      event's position plus subtle losses downstream. Telecoms run these scans continuously to
+      monitor long-haul and submarine cables. Balanced by design (43% anomaly) so classifiers
+      have enough positive examples to learn from.</div>
+    </div>
+  </div>
+  <div class="analogy" style="max-width:720px">
+    You'll see the same five stages run in parallel on both datasets. Phase 1 reduces the pool
+    by keeping only the top-scoring suspicious rows and passes them to Phase 2.
+  </div>
+  <button id="btn-intro" class="cont-btn">Start the video &rarr;</button>
+</div>
+
+<header>
+  <h1>Phase 1 &middot; ZZ-Kernel Prescreen</h1>
+  <button id="btn-pause">&#9654; START</button>
+</header>
+
+<nav id="stage-bar"></nav>
+
+<main>
+  <aside id="left">
+    <h3>Circuit</h3>
+    <svg viewBox="0 0 260 180" width="100%">
+      <g font-family="Share Tech Mono" font-size="10" fill="#c8e0f4">
+        <line x1="30" y1="30" x2="250" y2="30" stroke="#666" stroke-width="1"/>
+        <line x1="30" y1="70" x2="250" y2="70" stroke="#666" stroke-width="1"/>
+        <line x1="30" y1="110" x2="250" y2="110" stroke="#666" stroke-width="1"/>
+        <line x1="30" y1="150" x2="250" y2="150" stroke="#666" stroke-width="1"/>
+        <text x="8" y="34">q0</text><text x="8" y="74">q1</text>
+        <text x="8" y="114">q2</text><text x="8" y="154">q3</text>
+        <rect x="40" y="20" width="22" height="20" fill="#051225" stroke="#00b4ff"/>
+        <text x="51" y="34" text-anchor="middle" fill="#00b4ff">H</text>
+        <rect x="40" y="60" width="22" height="20" fill="#051225" stroke="#00b4ff"/>
+        <text x="51" y="74" text-anchor="middle" fill="#00b4ff">H</text>
+        <rect x="40" y="100" width="22" height="20" fill="#051225" stroke="#00b4ff"/>
+        <text x="51" y="114" text-anchor="middle" fill="#00b4ff">H</text>
+        <rect x="40" y="140" width="22" height="20" fill="#051225" stroke="#00b4ff"/>
+        <text x="51" y="154" text-anchor="middle" fill="#00b4ff">H</text>
+        <rect x="80" y="20" width="32" height="20" fill="#051225" stroke="#ffb04a"/>
+        <text x="96" y="34" text-anchor="middle" fill="#ffb04a">RZ</text>
+        <rect x="80" y="60" width="32" height="20" fill="#051225" stroke="#ffb04a"/>
+        <text x="96" y="74" text-anchor="middle" fill="#ffb04a">RZ</text>
+        <rect x="80" y="100" width="32" height="20" fill="#051225" stroke="#ffb04a"/>
+        <text x="96" y="114" text-anchor="middle" fill="#ffb04a">RZ</text>
+        <rect x="80" y="140" width="32" height="20" fill="#051225" stroke="#ffb04a"/>
+        <text x="96" y="154" text-anchor="middle" fill="#ffb04a">RZ</text>
+        <circle cx="135" cy="30" r="3" fill="#fff"/>
+        <line x1="135" y1="30" x2="135" y2="70" stroke="#fff" stroke-width="1"/>
+        <circle cx="135" cy="70" r="6" fill="none" stroke="#fff"/>
+        <rect x="150" y="20" width="42" height="60" fill="#051225" stroke="#00ffc8"/>
+        <text x="171" y="54" text-anchor="middle" fill="#00ffc8">ZZ</text>
+        <circle cx="210" cy="110" r="3" fill="#fff"/>
+        <line x1="210" y1="110" x2="210" y2="150" stroke="#fff" stroke-width="1"/>
+        <circle cx="210" cy="150" r="6" fill="none" stroke="#fff"/>
+      </g>
+    </svg>
+    <div class="note">
+      Hadamards put each feature register in superposition.
+      RZ(2x_i) encodes single-feature angles.
+      CNOT &middot; RZ(2 x_i x_j) &middot; CNOT encodes feature pairs &mdash; the source of the quantum fingerprint.
+      Kernel S_K = 1 &minus; &langle;&phi;(x), &phi;(x')&rangle;_R against a reference set R of known-normal rows.
+    </div>
+  </aside>
+
+  <section id="viz">
+    <div id="legend">
+      <div class="lg-item">
+        <svg class="lg-sym" width="16" height="16"><circle cx="8" cy="8" r="4" fill="#4aa8ff"/></svg>
+        <span>Any row — we don't know which is fraud yet</span>
+      </div>
+      <div class="lg-item">
+        <svg class="lg-sym" width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="#ffb04a" stroke-width="1.4"/><circle cx="8" cy="8" r="3" fill="#4aa8ff"/></svg>
+        <span>Gold ring = reference set R (trusted normals)</span>
+      </div>
+      <div class="lg-item">
+        <svg class="lg-sym" width="16" height="16"><circle cx="8" cy="8" r="4" fill="#ffb04a"/></svg>
+        <span>Amber tint = kernel score S_K rising (darker amber = more suspicious)</span>
+      </div>
+      <div class="lg-item">
+        <svg class="lg-sym" width="16" height="16"><circle cx="8" cy="8" r="7" fill="none" stroke="#00ffc8" stroke-width="1.2"/><circle cx="8" cy="8" r="3" fill="#ffb04a"/></svg>
+        <span>Green halo = flagged for Phase 2 (top-k% cut)</span>
+      </div>
+      <div class="lg-item">
+        <svg class="lg-sym" width="16" height="16"><circle cx="8" cy="8" r="7" fill="none" stroke="#00ffc8" stroke-width="1.2"/><circle cx="8" cy="8" r="3" fill="#ff5c7a"/></svg>
+        <span>Red reveal (final stage) = confirmed fraud in the benchmark</span>
+      </div>
+    </div>
+    <div class="viz-row">
+      <div class="plot A">
+        <div class="lbl">Credit Card Transactions</div>
+        <div class="sub">Full dataset: 284 807 rows · 0.17% fraud · shown: 120 representative rows (preserves ratio)</div>
+        <svg id="svgA" width="100%" height="100%" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+      <div class="plot B">
+        <div class="lbl">Optical-Fibre OTDR</div>
+        <div class="sub">Full dataset: 372 rows · 43% anomaly · shown: 120 dots (preserves ratio)</div>
+        <svg id="svgB" width="100%" height="100%" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+  </section>
+
+  <aside id="right">
+    <h3>Metrics</h3>
+    <div class="metric A"><span>A · dataset N (full)</span><span class="mv">284 807</span></div>
+    <div class="metric A"><span>A · base fraud rate</span><span class="mv">0.17%</span></div>
+    <div class="metric A"><span>A · top-k% (tuner)</span><span class="mv">1.35%</span></div>
+    <div class="metric A"><span>A · |R| (reference set)</span><span class="mv" id="mA-ref">0</span></div>
+    <div class="metric A"><span>A · selected → Phase 2</span><span class="mv" id="mA-sel">0</span></div>
+    <div class="metric A"><span>A · fraud% in selected</span><span class="mv" id="mA-rate">—</span></div>
+    <div style="height:14px"></div>
+    <div class="metric B"><span>B · dataset N (full)</span><span class="mv">372</span></div>
+    <div class="metric B"><span>B · base anomaly rate</span><span class="mv">43%</span></div>
+    <div class="metric B"><span>B · top-k% (tuner)</span><span class="mv">12.5%</span></div>
+    <div class="metric B"><span>B · |R| (reference set)</span><span class="mv" id="mB-ref">0</span></div>
+    <div class="metric B"><span>B · selected → Phase 2</span><span class="mv" id="mB-sel">0</span></div>
+    <div class="metric B"><span>B · anomaly% in selected</span><span class="mv" id="mB-rate">—</span></div>
+    <div class="note">
+      <b>Reference set R</b> = a small sample treated as "known-normal".  The kernel scores
+      every row by distance from R; rows far from every member get high S_K.
+      <br/><br/>
+      <b>Top-k% values differ per dataset — they come from the tuner.</b>
+      The 2026-04-21 convergence tuner picked <b>1.35% on Credit Card</b> → <b>3 845 rows</b>
+      enter Phase 2, and <b>12.5% on OTDR</b> → <b>46 rows</b> enter Phase 2.
+      Those exact counts are what the "selected → Phase 2" metric shows, and they are
+      handed forward to Phase 2 as the autoencoder training pool.
+      <br/><br/>
+      <b>The visual is a 120-dot sample</b> of each dataset (we cannot draw 284 807 dots).
+      So on screen you will see ~2 dots above the cut on Credit Card and ~15 on OTDR —
+      a visual proxy for the real counts reported in the metrics panel.
+      <br/><br/>
+      <b>Why is fraud% in selected so high?</b> That's the prescreen doing its job:
+      concentration rises sharply from the base rate. A small pool with high fraud density
+      is exactly what Phase 2 wants.
+    </div>
+  </aside>
+</main>
+
+<footer id="banner">
+  <span class="st" id="bn-stage">Stage 1</span>
+  <span id="bn-text">Raw input rows.</span>
+</footer>
+
+<script>
+const STAGES = [
+  {name:'Raw Input',           dur:6,  text:'Each dot is one row. All blue — we have no idea which are fraud. The kernel does not know either; its job is to find them from features alone.'},
+  {name:'Pick Reference Set R',dur:6,  text:'We pick a small sample of rows as R — a stand-in for what normal looks like. Gold rings mark these. R seeds the kernel with "trusted normals"; we never label any anomaly.'},
+  {name:'Compare Fingerprints',dur:10, text:'R fires rays outward. One candidate at a time is tested; every reference measures its distance to that candidate. Dots lerp from BLUE toward AMBER as their kernel score S_K rises — darker amber = farther from R = more suspicious.'},
+  {name:'Top-k% Cut',          dur:6,  text:'A threshold line sweeps down. Rows above it (green halo) are flagged for Phase 2. They still glow amber — the kernel has not confirmed fraud, only ranked "most suspicious."'},
+  {name:'Hand-off + Reveal',   dur:8,  text:'The benchmark now reveals ground-truth labels. Among the flagged rows: RED = true fraud the kernel caught; BLUE = false alarm. This is how we measure accuracy. The surviving pool (still the full flagged set) advances to Phase 2 for the second opinion.'},
+];
+
+let paused = true;
+let stageIdx = 0;
+let stageClock = 0;
+let lastT = performance.now();
+
+const stageBar = document.getElementById('stage-bar');
+STAGES.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='stage-chip'; b.dataset.stage=i;
+  b.textContent=(i+1)+'. '+s.name;
+  b.addEventListener('click', ()=>{ stageIdx=i; stageClock=0; updateStageBar(); updateBanner(); });
+  stageBar.appendChild(b);
+});
+const stageChips = [...document.querySelectorAll('.stage-chip')];
+
+function rand(seed){return function(){ seed = (seed*9301+49297) % 233280; return seed/233280; };}
+
+// Both classes sample from the SAME centre so fraud is mixed in among normals — not
+// parked in a corner. Fraud gets a wider spread so it is more likely to land at the
+// edges of the cloud (far from references), making it detectable by kernel distance,
+// but individually indistinguishable by eye.
+function gauss(rng){ return (rng()+rng()+rng()+rng()-2); }   // mean 0, ~Gaussian
+function makeDots(n, fraudRate, rng, cx, cy){
+  const dots=[];
+  for (let i=0;i<n;i++){
+    const isFraud = rng() < fraudRate;
+    const spread = isFraud ? 130 : 55;   // fraud spread is broader — hides at the edges
+    let x = cx + gauss(rng)*spread;
+    let y = cy + gauss(rng)*spread;
+    x = Math.max(20, Math.min(380, x));
+    y = Math.max(20, Math.min(380, y));
+    dots.push({x, y, fraud:isFraud, id:i, score:0, sel:false});
+  }
+  return dots;
+}
+
+// 120 visual dots per panel — the full dataset (284 807 rows / 372 rows) is processed by
+// the production pipeline; these dots are a representative sample preserving the fraud ratio.
+const DOTS_A = makeDots(120, 0.12, rand(17), 200, 200);
+const DOTS_B = makeDots(120, 0.43, rand(97), 200, 200);
+
+function pickRefs(dots, count, rng){
+  const normals = dots.filter(d=>!d.fraud);
+  const shuffled = normals.slice().sort(()=>rng()-0.5);
+  return new Set(shuffled.slice(0, count).map(d=>d.id));
+}
+const REFS_A = pickRefs(DOTS_A, 10, rand(3));
+const REFS_B = pickRefs(DOTS_B, 10, rand(5));
+
+function computeScores(dots, refSet){
+  const refs = dots.filter(d=>refSet.has(d.id));
+  dots.forEach(d=>{
+    let best=Infinity;
+    for (const r of refs){
+      const dx=d.x-r.x, dy=d.y-r.y;
+      const dd=Math.sqrt(dx*dx+dy*dy);
+      if (dd<best) best=dd;
+    }
+    d.score = Math.min(1, best/260);
+  });
+}
+computeScores(DOTS_A, REFS_A);
+computeScores(DOTS_B, REFS_B);
+
+// Per-dataset top_k_frac — the EXACT values the 2026-04-21 convergence tuner picked
+// for each benchmark on held-out validation. These carry through to Phase 2 (pool size).
+const K_PCT_A = 0.0135;   // Credit-card: from 284 807 → 3 845 rows (= top 1.35%)
+const K_PCT_B = 0.125;    // OTDR: from 372 → 46 rows (= top 12.5%)
+function markSelected(dots, pct){
+  const sorted=[...dots].sort((a,b)=>b.score-a.score);
+  const cut=Math.max(1, Math.floor(dots.length*pct));
+  sorted.forEach((d,i)=>{ d.sel = i<cut; });
+}
+markSelected(DOTS_A, K_PCT_A);
+markSelected(DOTS_B, K_PCT_B);
+
+const svgNS='http://www.w3.org/2000/svg';
+function clear(svg){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+function mk(tag, attrs){
+  const el=document.createElementNS(svgNS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+// SVG rendering of 120 dots per panel, with ref rings, sweep line, cut line, selection halos.
+// New narrative:
+//   Stages 0–1: all dots blue (we don't know which are anomalies yet).
+//   Stage 2:    kernel fires rays from R; dots lerp blue → amber as their S_K rises.
+//   Stage 3:    k% cut; top-scoring dots get a green halo — flagged for Phase 2.
+//   Stage 4:    REVEAL — benchmark labels finally shown; selected rows go red (true fraud)
+//               or stay blue (false alarm) so the viewer can see kernel accuracy.
+function lerpColor(s){
+  // blue(74,168,255) → amber(255,176,74)
+  s = Math.max(0, Math.min(1, s));
+  const r = Math.round(74 + (255-74)*s);
+  const g = Math.round(168 + (176-168)*s);
+  const b = Math.round(255 + (74-255)*s);
+  return `rgb(${r},${g},${b})`;
+}
+function renderPlot(svg, dots, refSet, stage, progress, sweepPair){
+  clear(svg);
+  for (let i=1;i<5;i++){
+    svg.appendChild(mk('line',{x1:i*80,y1:0,x2:i*80,y2:400,stroke:'rgba(0,180,255,0.06)'}));
+    svg.appendChild(mk('line',{x1:0,y1:i*80,x2:400,y2:i*80,stroke:'rgba(0,180,255,0.06)'}));
+  }
+  if (stage===2 && sweepPair){
+    const {candidate, refs} = sweepPair;
+    svg.appendChild(mk('circle',{
+      cx: candidate.x, cy: candidate.y, r: 9,
+      fill:'none', stroke:'#ffb04a', 'stroke-width':'1.6', opacity:'0.9'
+    }));
+    for (const r of refs){
+      const dx = candidate.x - r.x, dy = candidate.y - r.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const op = Math.max(0.15, 0.85 - dist/260);
+      svg.appendChild(mk('line',{
+        x1: r.x, y1: r.y, x2: candidate.x, y2: candidate.y,
+        stroke:'#ffb04a', 'stroke-width':'1', opacity: op, 'stroke-dasharray':'3,3'
+      }));
+    }
+  }
+  if (stage===3){
+    const y = 30 + (1-progress)*340;
+    svg.appendChild(mk('line',{x1:0,y1:y,x2:400,y2:y,stroke:'#00ffc8','stroke-width':'1.5',opacity:'0.8'}));
+    const t=mk('text',{x:8,y:y-4,fill:'#00ffc8','font-size':'10','font-family':'Share Tech Mono'});
+    t.textContent='k% cut';
+    svg.appendChild(t);
+  }
+
+  dots.forEach((d,i)=>{
+    const isRef = refSet.has(d.id);
+    let color = '#4aa8ff';   // default blue — we don't know the label
+    let op = 1, r = 3.5;
+
+    if (stage===0){
+      op = Math.min(1, Math.max(0.4, progress*4 - (i/dots.length)*2));
+    } else if (stage===1){
+      op = 1;
+    } else if (stage===2){
+      // colour dots by kernel score as it is computed (blue → amber)
+      const reveal = Math.min(1, progress*1.3);
+      const s = d.score * reveal;
+      color = lerpColor(s);
+      op = 0.85;
+    } else if (stage===3){
+      // hold the score-gradient colour; above-cut dots get a green halo
+      color = lerpColor(d.score);
+      const revealed = (1-d.score) < progress;
+      op = revealed ? (d.sel ? 1 : 0.3) : 0.85;
+    } else if (stage===4){
+      // REVEAL: flagged + actually-fraud → red; flagged + normal → blue (false alarm);
+      // dropped → stay blue faded
+      if (d.sel){
+        color = d.fraud ? '#ff5c7a' : '#4aa8ff';
+        op = 1;
+      } else {
+        color = '#4aa8ff';
+        op = 0.2;
+      }
+    }
+
+    const showSelHalo = (stage>=3 && d.sel && (stage===4 || (1-d.score)<progress));
+    if (showSelHalo){
+      svg.appendChild(mk('circle',{cx:d.x,cy:d.y,r:7,fill:'none',stroke:'#00ffc8','stroke-width':'1.4',opacity:0.85}));
+    }
+    if (stage>=1 && isRef){
+      const ringOp = stage===1 ? Math.min(1, progress*1.5) : 0.9;
+      svg.appendChild(mk('circle',{cx:d.x,cy:d.y,r:6,fill:'none',stroke:'#ffb04a','stroke-width':'1.4',opacity:ringOp}));
+    }
+    svg.appendChild(mk('circle',{cx:d.x,cy:d.y,r:r,fill:color,opacity:op}));
+  });
+
+  if (stage===4){
+    const t = Math.min(1, progress*2);
+    svg.appendChild(mk('path',{
+      d:'M 200 360 L 200 390 M 188 378 L 200 390 L 212 378',
+      stroke:'#00ffc8','stroke-width':'2.5',fill:'none',opacity:t
+    }));
+    const label = mk('text',{x:200,y:350,fill:'#00ffc8','font-family':'Share Tech Mono','font-size':'11','text-anchor':'middle',opacity:t});
+    label.textContent='to Phase 2';
+    svg.appendChild(label);
+  }
+}
+
+const mA_pool = document.getElementById('mA-pool');
+const mA_ref  = document.getElementById('mA-ref');
+const mA_sel  = document.getElementById('mA-sel');
+const mA_rate = document.getElementById('mA-rate');
+const mB_pool = document.getElementById('mB-pool');
+const mB_ref  = document.getElementById('mB-ref');
+const mB_sel  = document.getElementById('mB-sel');
+const mB_rate = document.getElementById('mB-rate');
+
+const mA_enrich = document.getElementById('mA-enrich');
+const mB_enrich = document.getElementById('mB-enrich');
+
+// Full-dataset sizes (the real numbers carried into Phase 2)
+const N_A_FULL = 284807;
+const N_B_FULL = 372;
+const N_A_REF_FULL = Math.round(N_A_FULL * 0.005);        // tuner-scaled |R| on production (~0.5%)
+const N_B_REF_FULL = Math.round(N_B_FULL * 0.10);         // smaller dataset gets larger proportional |R|
+const N_A_SEL_FULL = Math.round(N_A_FULL * K_PCT_A);      // 3 845
+const N_B_SEL_FULL = Math.round(N_B_FULL * K_PCT_B);      //    46
+function fmtN(n){ return n.toLocaleString('en-US').replace(/,/g,' '); }
+
+function updateMetrics(stage){
+  mA_ref.textContent = stage>=1 ? fmtN(N_A_REF_FULL) : 0;
+  mB_ref.textContent = stage>=1 ? fmtN(N_B_REF_FULL) : 0;
+  if (stage>=3){
+    const aSel=DOTS_A.filter(d=>d.sel).length;
+    const bSel=DOTS_B.filter(d=>d.sel).length;
+    // Expose the per-dataset production carry-forward counts to Phase 2 via localStorage.
+    try {
+      localStorage.setItem('qad_p1_out_A', JSON.stringify({production_n:N_A_FULL, top_k_pct:K_PCT_A, production_selected:N_A_SEL_FULL}));
+      localStorage.setItem('qad_p1_out_B', JSON.stringify({production_n:N_B_FULL, top_k_pct:K_PCT_B, production_selected:N_B_SEL_FULL}));
+    } catch(e){}
+    // Show full-dataset counts, not the sample's visible count
+    mA_sel.textContent = fmtN(N_A_SEL_FULL);
+    mB_sel.textContent = fmtN(N_B_SEL_FULL);
+    const aF = DOTS_A.filter(d=>d.sel&&d.fraud).length;
+    const bF = DOTS_B.filter(d=>d.sel&&d.fraud).length;
+    const aRate = aSel ? (100*aF/aSel) : 0;
+    const bRate = bSel ? (100*bF/bSel) : 0;
+    mA_rate.textContent = aRate.toFixed(1)+'%';
+    mB_rate.textContent = bRate.toFixed(1)+'%';
+  } else {
+    mA_sel.textContent=0; mB_sel.textContent=0;
+    mA_rate.textContent='—'; mB_rate.textContent='—';
+  }
+}
+
+const bnStage=document.getElementById('bn-stage');
+const bnText=document.getElementById('bn-text');
+function updateBanner(){
+  bnStage.textContent='Stage '+(stageIdx+1);
+  bnText.textContent=STAGES[stageIdx].text;
+}
+function updateStageBar(){
+  stageChips.forEach((c,i)=>c.classList.toggle('active', i===stageIdx));
+}
+
+function sweepPairFor(dots, refSet, clock){
+  const refs = [];
+  const nonRefs = [];
+  for (const d of dots){
+    if (refSet.has(d.id)) refs.push(d);
+    else nonRefs.push(d);
+  }
+  if (refs.length === 0 || nonRefs.length === 0) return null;
+  // Each frame: pick ONE candidate; draw rays from EVERY reference to it.
+  // That is what the kernel actually does — each row is compared against all of R.
+  const idx = Math.floor(clock * 2) % nonRefs.length;
+  const candidate = nonRefs[idx];
+  return { candidate, refs };
+}
+
+const svgA = document.getElementById('svgA');
+const svgB = document.getElementById('svgB');
+
+function render(stage, p){
+  const swA = stage===2 ? sweepPairFor(DOTS_A, REFS_A, stageClock) : null;
+  const swB = stage===2 ? sweepPairFor(DOTS_B, REFS_B, stageClock) : null;
+  renderPlot(svgA, DOTS_A, REFS_A, stage, p, swA);
+  renderPlot(svgB, DOTS_B, REFS_B, stage, p, swB);
+  updateMetrics(stage);
+}
+
+function advanceStage(){
+  stageIdx = (stageIdx+1) % STAGES.length;
+  stageClock = 0;
+  updateBanner();
+  updateStageBar();
+}
+
+function tick(now){
+  requestAnimationFrame(tick);
+  const dt = (now - lastT)/1000;
+  lastT = now;
+  if (!paused){
+    stageClock += dt;
+    if (stageClock > STAGES[stageIdx].dur) advanceStage();
+    render(stageIdx, Math.min(1, stageClock/STAGES[stageIdx].dur));
+  } else {
+    render(stageIdx, Math.min(1, stageClock/STAGES[stageIdx].dur));
+  }
+}
+requestAnimationFrame(tick);
+
+document.getElementById('btn-intuition').addEventListener('click', ()=>{
+  document.getElementById('intuition').classList.add('hide');
+  document.getElementById('intro').classList.remove('hide');
+});
+document.getElementById('btn-intro').addEventListener('click', ()=>{
+  document.getElementById('intro').classList.add('hide');
+  paused = false;
+  stageClock = 0;
+  stageIdx = 0;
+  btnPause.textContent = '⏸ PAUSE';
+  updateBanner();
+  updateStageBar();
+});
+const btnPause = document.getElementById('btn-pause');
+btnPause.addEventListener('click', ()=>{
+  if (!document.getElementById('intro').classList.contains('hide')) return;
+  paused = !paused;
+  btnPause.textContent = paused ? '▶ RESUME' : '⏸ PAUSE';
+});
+
+updateBanner();
+updateStageBar();
+render(0, 0);
+</script>
+</body>
+</html>

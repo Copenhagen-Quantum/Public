@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>QAD — Quantum Explainer Videos</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030509;--panel:rgba(6,14,28,0.88);--border:rgba(0,180,255,0.18);
+      --accent:#00b4ff;--accent2:#00ffc8;--accent3:#ffb04a;--accent4:#b96cff;
+      --dim:rgba(0,180,255,0.45);--text:#c8e0f4;
+      --mono:'Share Tech Mono',monospace;--head:'Barlow Condensed',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);padding:36px 48px;min-height:100vh}
+h1{font-family:var(--head);font-size:30px;letter-spacing:.14em;text-transform:uppercase;color:#fff;margin-bottom:4px}
+.sub{color:var(--dim);font-size:13px;letter-spacing:.06em;margin-bottom:36px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;max-width:1400px}
+a.card{display:block;background:var(--panel);border:1px solid var(--border);border-radius:6px;
+       padding:26px 28px;color:var(--text);text-decoration:none;transition:all .25s;position:relative;overflow:hidden}
+a.card:hover{border-color:var(--accent);transform:translateY(-3px)}
+a.card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
+a.card.p2::before{background:var(--accent4)}
+a.card.p3::before{background:var(--accent3)}
+.tag{display:inline-block;font-family:var(--head);font-size:11px;letter-spacing:.2em;
+     color:var(--accent);padding:3px 10px;border:1px solid var(--accent);margin-bottom:10px}
+.p2 .tag{color:var(--accent4);border-color:var(--accent4)}
+.p3 .tag{color:var(--accent3);border-color:var(--accent3)}
+h2{font-family:var(--head);font-size:22px;letter-spacing:.08em;text-transform:uppercase;color:#fff;margin-bottom:10px}
+.desc{font-size:12px;line-height:1.6;color:var(--text);margin-bottom:14px}
+.eq{display:inline-block;background:#051224;padding:5px 10px;border-radius:3px;color:var(--accent2);font-size:11px}
+.p2 .eq{color:var(--accent4)}
+.p3 .eq{color:var(--accent3)}
+.footer{margin-top:40px;color:var(--dim);font-size:11px;letter-spacing:.06em}
+.datasets{margin-top:28px;background:var(--panel);border:1px solid var(--border);padding:20px 26px;border-radius:6px;max-width:1400px;font-size:13px}
+.datasets .lbl{font-family:var(--head);font-size:13px;letter-spacing:.14em;color:var(--accent);text-transform:uppercase;margin-bottom:10px}
+.datasets .row{display:flex;gap:30px}
+.datasets .col{flex:1}
+.datasets .n{color:#fff;font-weight:bold}
+.datasets .k{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+.datasets .col.A .n{color:var(--accent)}
+.datasets .col.B .n{color:var(--accent2)}
+</style>
+</head>
+<body>
+<h1>QAD · Quantum Explainer Videos</h1>
+<div class="sub">Side-by-side visualisations of the three quantum phases · Credit-card fraud vs optical-fibre monitoring</div>
+
+<div class="cards">
+  <a class="card p1" href="phase1_zz_kernel.html">
+    <span class="tag">Phase 1</span>
+    <h2>ZZ-Kernel Prescreen</h2>
+    <div class="desc">Hadamard + RZ(2x_i) + CNOT·RZ(2x_ix_j)·CNOT builds a quantum-kernel similarity to a reference set. The top-k% pool advances.</div>
+    <div class="eq">S_K = 1 − ⟨φ(x), φ(x')⟩_R</div>
+  </a>
+  <a class="card p2" href="phase2_autoencoder.html">
+    <span class="tag">Phase 2</span>
+    <h2>Quantum Autoencoder</h2>
+    <div class="desc">Hardware-efficient ansatz compresses 8 qubits → 3 latent qubits; SWAP-test on trash qubits measures fidelity; 1−F is the anomaly score.</div>
+    <div class="eq">S_A = 1 − F(trash, |0⟩⁵)</div>
+  </a>
+  <a class="card p3" href="phase3_qaoa.html">
+    <span class="tag">Phase 3</span>
+    <h2>QAOA Marginal Selector</h2>
+    <div class="desc">Variational circuit on the Phase 2 pool: U_C(γ) and U_B(β) alternating layers pick the final candidates (number is tuner output per dataset) by minimising an Ising Hamiltonian.</div>
+    <div class="eq">H_C = α·Σsᵢ Zᵢ + (1−α)·Σdᵢⱼ ZᵢZⱼ</div>
+  </a>
+</div>
+
+<div class="datasets">
+  <div class="lbl">Benchmarks shown in every video</div>
+  <div class="row">
+    <div class="col A">
+      <span class="n">Credit Card Transactions</span> — Financial payment-card fraud<br/>
+      <span class="k">284 807 rows · 0.17% fraud · 30 PCA-anonymised features</span><br/>
+      <span class="k">Each row = one European card purchase (time, amount, merchant fingerprint)</span><br/>
+      <span class="k">QAD win vs tuned IF: ΔPR-AUC +0.040, ΔROC-AUC +0.004</span>
+    </div>
+    <div class="col B">
+      <span class="n">Optical-Fibre OTDR Traces</span> — Photonic-fibre return-loss traces<br/>
+      <span class="k">372 rows · 43% anomaly · 102 channels</span><br/>
+      <span class="k">Each row = one OTDR scan — a laser pulse sent down a fibre-optic cable; the back-scattered light is recorded at 102 distance bins along the cable. Anomalies (taps, digs, bends, breaks) show up as correlated spikes and dips.</span><br/>
+      <span class="k">QAD win vs tuned IF: ΔPR-AUC +0.086, ΔROC-AUC +0.151 (largest across all 9 benchmarks)</span>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Plain SVG + DOM + CSS · no network or build step · runs offline in any modern browser.
+  Each video pauses on load; click START to begin, use stage chips to jump, pause any time.
+</div>
+</body>
+</html>
