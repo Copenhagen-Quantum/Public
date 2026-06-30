@@ -20,6 +20,12 @@ Interactive visual explainers for quantum computing applications in financial se
 | [QAD Introduction](qad_voiced.html) | 18-scene introduction to the QAD framework |
 | [QAD Deep-Dive](qad_implementation_voiced.html) | 34-scene implementation walkthrough: ZZ kernel, autoencoder, QAOA, n*(ρ) theorem |
 
+### Quantum Anomaly Detection — Live Operator Dashboard (TDC NET Pilot)
+
+| Demo | Description |
+|-----------|-------------|
+| [Fibre Operator Dashboard v0.3.0](qad_fibre_demo_v0.3.0_2026-06-29.html) | Live operator dashboard for photonic fibre cable monitoring — five fibre datasets (intrusion, health, OTDR event, DAS event, DAS audible). Hybrid quantum-classical pipeline (quantum kernel + quantum autoencoder + QAOA selector). PR-AUC and ROC-AUC per use case, agreement-class scoring, simulator/QPU validation status. |
+
 ### Quantum Credit Scoring
 
 | Explainer | Description |
