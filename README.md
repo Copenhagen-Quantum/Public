@@ -26,6 +26,13 @@ Interactive visual explainers for quantum computing applications in financial se
 |-----------|-------------|
 | [Fibre Operator Dashboard v0.3.0](qad_fibre_demo_v0.3.0_2026-06-29.html) | Live operator dashboard for photonic fibre cable monitoring — five fibre datasets (intrusion, health, OTDR event, DAS event, DAS audible). Hybrid quantum-classical pipeline (quantum kernel + quantum autoencoder + QAOA selector). PR-AUC and ROC-AUC per use case, agreement-class scoring, simulator/QPU validation status. |
 
+### Investor demos
+
+| Demo | Description |
+|-----------|-------------|
+| [Investor demos index](investor/) | Interactive client consoles from our pilots |
+| [ABC Asset Management — Pilot report](investor/ABC_Asset_Management_Pilot_report_investor_v1.2_2026-10-07.html) | Quantum portfolio optimisation pilot console: performance, weights, sectors, trades, model agreement |
+
 ### Quantum Credit Scoring
 
 | Explainer | Description |
