@@ -31,7 +31,7 @@ Interactive visual explainers for quantum computing applications in financial se
 | Demo | Description |
 |-----------|-------------|
 | [Investor demos index](investor/) | Interactive client consoles from our pilots |
-| [ABC Asset Management — Pilot report](investor/ABC_Asset_Management_Pilot_report_investor_v1.2_2026-10-07.html) | Quantum portfolio optimisation pilot console: performance, weights, sectors, trades, model agreement |
+| [ABC Asset Management — Pilot report](investor/ABC_Asset_Management_Pilot_report_investor_v1.3_2026-11-19.html) | Quantum portfolio optimisation pilot console: performance, weights, sectors, trades, model agreement |
 | [ABC Bank — Finance console](investor/CoQu_QAD_Finance_Console_ABC_Bank_v1.5.html) | Quantum anomaly detection console: banking, payments and insurance-claims fraud |
 | [ABC Telecom — Fibre console](investor/CoQu_QAD_Fibre_Console_ABC_Telecom_v1.5.html) | Quantum anomaly detection console: fibre-network monitoring |
 
